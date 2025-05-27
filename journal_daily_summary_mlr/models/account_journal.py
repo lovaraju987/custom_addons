@@ -20,7 +20,8 @@ class AccountJournal(models.Model):
         compute='_compute_daily_payments'
     )
 
-    report_date = fields.Date(
+    # Change report_date to a Datetime field
+    report_date = fields.Datetime(
         string="Report Date",
         compute='_compute_daily_payments'
     )
@@ -41,9 +42,11 @@ class AccountJournal(models.Model):
 
     @api.depends('journal_owner_id')
     def _compute_daily_payments(self):
+        # Use today's date for search, but assign now() for report_date so time is included.
         report_day = fields.Date.context_today(self)
         for journal in self:
-            journal.report_date = report_day
+            # Assign current datetime in the report header
+            journal.report_date = fields.Datetime.now()
             payments = self.env['account.payment'].search([
                 ('journal_id', '=', journal.id),
                 ('date', '=', report_day),
@@ -55,10 +58,8 @@ class AccountJournal(models.Model):
 
     @api.depends('payment_lines', 'payment_lines.date', 'payment_lines.state', 'payment_lines.payment_type', 'payment_lines.amount')
     def _compute_payments_summary(self):
-        # Use today's date as reference (the report date)
         for journal in self:
             report_day = fields.Date.context_today(journal)
-            # Search for all posted payments with date <= today
             payments_all = self.env['account.payment'].search([
                 ('journal_id', '=', journal.id),
                 ('date', '<=', report_day),
@@ -81,5 +82,4 @@ class AccountJournal(models.Model):
             journal.total_sent_today = sent
 
     def print_journal_summary_report(self):
-        # Return a report action
         return self.env.ref('journal_daily_summary_mlr.action_report_journal_daily_summary').report_action(self)

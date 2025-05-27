@@ -4,7 +4,10 @@
         <t t-call="web.basic_layout">
             <div class="page">
                 <t t-foreach="docs" t-as="doc">
-                    <h2>Payments Summary for <t t-esc="doc.report_date"/></h2>
+                    <!-- Wrap the report_date in a span for proper formatting -->
+                    <h2>
+                        Payments Summary for <t t-esc="doc.name"/> on <span t-field="doc.report_date"/>
+                    </h2>
                     <table class="table table-sm">
                         <thead>
                             <tr>
