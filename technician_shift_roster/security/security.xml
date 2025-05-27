@@ -1,0 +1,35 @@
+<odoo>
+  <data noupdate="0">
+
+    <!-- Custom Category -->
+    <record id="module_category_technician_roster" model="ir.module.category">
+      <field name="name">Technician Roster</field>
+      <field name="sequence">15</field>
+    </record>
+
+    <!-- Technician Roster Admin -->
+    <record id="group_technician_admin" model="res.groups">
+      <field name="name">Technician Roster Admin</field>
+      <field name="category_id" ref="technician_shift_roster.module_category_technician_roster"/>
+    </record>
+
+    <!-- Technician Roster Manager -->
+    <record id="group_technician_manager" model="res.groups">
+      <field name="name">Technician Roster Manager</field>
+      <field name="category_id" ref="technician_shift_roster.module_category_technician_roster"/>
+    </record>
+
+    <!-- Store Manager -->
+    <record id="group_store_manager" model="res.groups">
+      <field name="name">Technician Store Manager</field>
+      <field name="category_id" ref="technician_shift_roster.module_category_technician_roster"/>
+    </record>
+
+    <!-- Technician (Read Only) -->
+    <record id="group_technician_user" model="res.groups">
+      <field name="name">Technician</field>
+      <field name="category_id" ref="technician_shift_roster.module_category_technician_roster"/>
+    </record>
+
+  </data>
+</odoo>

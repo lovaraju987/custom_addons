@@ -1,0 +1,52 @@
+
+
+
+
+<odoo>
+    <record id="view_task_form_inherit_field_service" model="ir.ui.view">
+        <field name="name">project.task.form.inherit.field.service</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+            <!-- <xpath expr="//sheet" position="inside"> -->
+            <!-- <xpath expr="//field[@name='project_id']" position="after">
+                <field name="project_is_field_service" invisible="1"/>
+            </xpath> -->
+            <xpath expr="//field[@name='tag_ids']" position="after">
+                <field name="actual_pieces" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='timesheet_ids']/ancestor::page" position="before">
+                <page string="Actual Pieces Installed">
+                    <field name="actual_pieces" widget="one2many_list">
+                        <tree>
+                            <field name="product_id"/>
+                            <field name="height"/>
+                            <field name="width"/>
+                            <field name="actual_sqft"/>
+                        </tree>
+                        <form>
+                            <sheet>
+                                <group>
+                                    <field name="product_id"/>
+                                    <field name="height"/>
+                                    <field name="width"/>
+                                    <field name="actual_sqft" readonly="1"/>
+                                </group>
+                                <group string="Attachments">
+                                    <field name="attachment_ids" widget="many2many_binary"/>
+                                </group>
+                                <field name="available_product_ids" invisible="1"/>
+                            </sheet>
+                        </form>
+                    </field>
+                <group>
+                    <field name="total_actual_sqft" readonly="1"/>
+                </group>
+                </page>
+                
+            </xpath>
+        </field>
+    </record>
+
+
+</odoo>

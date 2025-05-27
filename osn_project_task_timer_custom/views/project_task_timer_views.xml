@@ -1,0 +1,122 @@
+<odoo>
+    <data>
+        <record id="view_task_form_inherit_timer" model="ir.ui.view">
+            <field name="name">project.task.form.inherit.timer</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_form2"/>
+            <field name="arch" type="xml">
+                        <!-- Add the field to the view but keep it invisible -->
+                <xpath expr="//field[@name='project_id']" position="after">
+                    <field name="is_field_service_project" invisible="1"/>
+                </xpath>
+                <xpath expr="//header" position="inside">
+                    <!-- Start Button -->
+                    <button name="action_start_timer" type="object" string="Start"
+                            class="btn-primary"
+                            context="{'from_button': True}"
+                            confirm="Are you sure you want to start the timer? This action will move the task to 'Inprogress'."
+                            invisible="timer_is_running or stage_id != 29"/>
+
+                    <!-- On Hold Button -->
+                    <button name="action_pause_timer" type="object" string="On Hold"
+                            class="btn-warning"
+                            context="{'from_button': True}"
+                            invisible="not timer_is_running or stage_id != 30"/>
+
+                    <!-- Stop Button -->
+                    <button name="action_stop_timer" type="object" string="Stop"
+                            class="btn-danger"
+                            context="{'from_button': True}"
+                            confirm="Are you sure you want to stop the timer? This action will move the task to 'Completed'."
+                            invisible="not timer_is_running or stage_id != 30"/>
+
+                     <!-- Resume Button - Visible only in On Hold stage -->
+                    <button name="action_resume_timer" type="object" string="Resume"
+                            class="btn-info"
+                            context="{'from_button': True}"
+                            invisible="stage_id != 31 or timer_is_running"/>
+
+                            <!-- live timer -->
+                    <!-- <field name="timer_elapsed_time" style="color: red;" readonly="1" invisible="not timer_is_running"/> -->
+                </xpath>
+
+                <xpath expr="//field[@name='progress']" position="after">
+                    <field name="customer_satisfied" widget="radio" readonly="1" invisible="not is_field_service_project or (stage_id != 33 and stage_id != 32)"/>
+                </xpath>
+
+                <xpath expr="//sheet" position="inside">
+                    <group string="Task Timer">
+                        <field name="timer_start_time" readonly="1" string="Timer Start Time"/>
+                        <field name="timer_total_time" readonly="1" string="Total Time (in minutes)"/>
+                        <field name="timer_is_running" invisible="1"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+
+        <record id="view_task_kanban_with_slots" model="ir.ui.view">
+            <field name="name">project.task.kanban.inherit</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_kanban"/>
+            <field name="arch" type="xml">
+                <!-- Add the field to the view but keep it invisible -->
+                <xpath expr="//field[@name='project_id']" position="after">
+                    <field name="is_field_service_project" invisible="1"/>
+                    <field name="timer_is_running" invisible="1"/>
+                </xpath>
+                <xpath expr="//div[@class='o_kanban_record_body']" position="inside">
+                        <div>
+            
+                            <span>
+                                <!-- Start Button -->
+                                <button name="action_start_timer" type="object" string="Start"
+                                        class="btn-primary"
+                                        context="{'from_button': True}"
+                                        confirm="Are you sure you want to start the timer? This action will move the task to 'Inprogress'."
+                                        invisible="timer_is_running or stage_id != 29"/>
+
+                                <!-- On Hold Button -->
+                                <button name="action_pause_timer" type="object" string="On Hold"
+                                        class="btn-warning"
+                                        context="{'from_button': True}"
+                                        invisible="not timer_is_running or stage_id != 30"/>
+
+                                <!-- Stop Button -->
+                                <button name="action_stop_timer" type="object" string="Stop"
+                                        class="btn-danger"
+                                        context="{'from_button': True}"
+                                        confirm="Are you sure you want to stop the timer? This action will move the task to 'Completed'."
+                                        invisible="not timer_is_running or stage_id != 30"/>
+
+                                <!-- Resume Button - Visible only in On Hold stage -->
+                                <button name="action_resume_timer" type="object" string="Resume"
+                                        class="btn-info"
+                                        context="{'from_button': True}"
+                                        invisible="stage_id != 31 or timer_is_running"/>
+                            </span>
+                        </div>
+                </xpath>
+            </field>
+        </record>
+
+                <!-- Wizard View -->
+        <record id="view_task_on_hold_wizard_form" model="ir.ui.view">
+            <field name="name">task.on.hold.wizard.form</field>
+            <field name="model">task.on.hold.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Reason for On Hold">
+                    <group>
+                        <field name="reason" placeholder="Enter the reason for On Hold..."/>
+                    </group>
+                    <footer>
+                        <button string="Confirm" type="object" name="action_confirm_on_hold" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+
+    </data>
+</odoo>

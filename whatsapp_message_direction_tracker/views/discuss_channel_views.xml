@@ -1,0 +1,20 @@
+<odoo>
+    <record id="view_discuss_channel_form_inherit_wa_direction" model="ir.ui.view">
+        <field name="name">discuss.channel.form.inherit.wa.direction</field>
+        <field name="model">discuss.channel</field>
+        <field name="priority" eval="99"/> <!-- High priority -->
+        <field name="type">form</field> <!-- Form view -->
+        <field name="arch" type="xml">
+            <form string="Discuss Channel">
+                <sheet>
+                    <group name="group_top">
+                        <group string="WhatsApp Message Direction">
+                            <field name="last_wa_message_direction"/>
+                            <field name="last_wa_message_date"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

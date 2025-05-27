@@ -1,0 +1,60 @@
+<odoo>
+  <data>
+    <!-- explicit list view definition -->
+<!--
+    <record model="ir.ui.view" id="field_service_checklist.list">
+      <field name="name">field_service_checklist list</field>
+      <field name="model">field_service_checklist.field_service_checklist</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name"/>
+          <field name="value"/>
+          <field name="value2"/>
+        </tree>
+      </field>
+    </record>
+-->
+
+    <!-- actions opening views on models -->
+<!--
+    <record model="ir.actions.act_window" id="field_service_checklist.action_window">
+      <field name="name">field_service_checklist window</field>
+      <field name="res_model">field_service_checklist.field_service_checklist</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+-->
+
+    <!-- server action to the one above -->
+<!--
+    <record model="ir.actions.server" id="field_service_checklist.action_server">
+      <field name="name">field_service_checklist server</field>
+      <field name="model_id" ref="model_field_service_checklist_field_service_checklist"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "tree,form",
+          "res_model": model._name,
+        }
+      </field>
+    </record>
+-->
+
+    <!-- Top menu item -->
+<!--
+    <menuitem name="field_service_checklist" id="field_service_checklist.menu_root"/>
+-->
+    <!-- menu categories -->
+<!--
+    <menuitem name="Menu 1" id="field_service_checklist.menu_1" parent="field_service_checklist.menu_root"/>
+    <menuitem name="Menu 2" id="field_service_checklist.menu_2" parent="field_service_checklist.menu_root"/>
+-->
+    <!-- actions -->
+<!--
+    <menuitem name="List" id="field_service_checklist.menu_1_list" parent="field_service_checklist.menu_1"
+              action="field_service_checklist.action_window"/>
+    <menuitem name="Server to list" id="field_service_checklist" parent="field_service_checklist.menu_2"
+              action="field_service_checklist.action_server"/>
+-->
+  </data>
+</odoo>

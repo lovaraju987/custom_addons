@@ -1,0 +1,10 @@
+<odoo>
+    <record id="action_adjust_inventory_on_task_close" model="ir.actions.server">
+        <field name="name">Adjust Inventory on Task Close</field>
+        <field name="model_id" ref="project.model_project_task"/>
+        <field name="state">code</field>
+        <field name="code">
+            model.action_close_task()
+        </field>
+    </record>
+</odoo>

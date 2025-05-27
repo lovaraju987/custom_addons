@@ -1,0 +1,21 @@
+<odoo>
+  <data noupdate="1">
+
+    <record id="technician_shift_slot_morning" model="technician.shift.slot">
+      <field name="name">Slot 1</field>
+    </record>
+
+    <record id="technician_shift_slot_afternoon" model="technician.shift.slot">
+      <field name="name">Slot 2</field>
+    </record>
+
+    <record id="technician_shift_slot_evening" model="technician.shift.slot">
+      <field name="name">Slot 3</field>
+    </record>
+
+    <record id="technician_shift_slot_night" model="technician.shift.slot">
+      <field name="name">Slot 4</field>
+    </record>
+
+  </data>
+</odoo>

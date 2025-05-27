@@ -1,0 +1,27 @@
+<odoo>
+  <data noupdate="0">
+
+    <!-- Store Manager: Own Location Weeks -->
+    <record id="rule_store_manager_week" model="ir.rule">
+      <field name="name">Store Manager: Own Location Weeks</field>
+      <field name="model_id" ref="model_technician_shift_week"/>
+      <field name="groups" eval="[(4, ref('technician_shift_roster.group_store_manager'))]"/>
+      <field name="domain_force">[('manager_id.user_id', '=', user.id)]</field>
+    </record>
+
+
+    <!-- Technician: Own Shifts Read Only -->
+    <record id="rule_technician_week_readonly" model="ir.rule">
+      <field name="name">Technician: Own Weeks</field>
+      <field name="model_id" ref="model_technician_shift_week"/>
+      <field name="groups" eval="[(4, ref('technician_shift_roster.group_technician_user'))]"/>
+      <field name="perm_read" eval="1"/>
+      <field name="perm_write" eval="0"/>
+      <field name="perm_create" eval="0"/>
+      <field name="perm_unlink" eval="0"/>
+      <field name="domain_force">[('technician_ids.user_id', '=', user.id)]</field>
+    </record>
+
+
+  </data>
+</odoo>

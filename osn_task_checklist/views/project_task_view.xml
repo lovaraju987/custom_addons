@@ -1,0 +1,54 @@
+<!-- views/project_task_view.xml -->
+
+<odoo>
+    <record id="view_task_form_inherit_checklist" model="ir.ui.view">
+        <field name="name">project.task.form.inherit.checklist</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+            <!-- Add checklist_id and progress fields -->
+            <xpath expr="//field[@name='tag_ids']" position="after">
+                <field name="checklist_id"/>
+                <field name="progress" widget="progressbar" class="oe_inline"/>
+            </xpath>
+
+            <!-- Place the Checklist Items page after the Timesheet section -->
+            <xpath expr="//field[@name='description']/ancestor::page" position="after">
+            <!-- <xpath expr="//form/sheet/notebook/page[last()]" position="after"> -->
+
+                <page string="Checklist Items">
+                    <field name="checklist_line_ids">
+                        <tree editable="bottom">
+                            <field name="name"/>
+                            <field name="description"/>
+                            <field name="is_mandatory"/> <!-- New Field -->
+                            <field name="is_photo_required"/>
+                            <field name="is_piece_related"/> <!-- New Field -->
+                            <field name="is_done" readonly="1"/>
+                            <button name="action_open_checklist_item" type="object" string="Open" class="btn-primary"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_task_kanban_with_checklist_progress" model="ir.ui.view">
+        <field name="name">project.task.kanban.inherit_progress</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_kanban"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//div[@class='o_kanban_record_body']" position="inside">
+                    <div>
+            
+                        <span>
+                            <field name="progress" widget="progressbar" class="oe_inline"/>
+
+                        </span>
+                    </div>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

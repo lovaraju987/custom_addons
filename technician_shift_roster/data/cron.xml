@@ -1,0 +1,12 @@
+<odoo>
+    <record id="ir_cron_update_roster_status" model="ir.cron">
+        <field name="name">Update Roster Status</field>
+        <field name="model_id" ref="model_technician_shift_week"/>
+        <field name="state">code</field>
+        <field name="code">model._update_roster_statuses_cron()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

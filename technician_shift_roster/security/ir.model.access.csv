@@ -1,0 +1,26 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_shift_week_admin,technician.shift.week admin,model_technician_shift_week,base.group_system,1,1,1,1
+access_shift_admin,technician.shift admin,model_technician_shift,base.group_system,1,1,1,1
+
+access_shift_week_manager,technician.shift.week manager,model_technician_shift_week,technician_shift_roster.group_technician_manager,1,1,1,1
+access_shift_manager,technician.shift manager,model_technician_shift,technician_shift_roster.group_technician_manager,1,1,1,1
+
+access_shift_week_store,technician.shift.week store manager,model_technician_shift_week,technician_shift_roster.group_store_manager,1,1,1,1
+access_shift_store,technician.shift store manager,model_technician_shift,technician_shift_roster.group_store_manager,1,1,1,1
+
+access_shift_week_tech,technician.shift.week technician,model_technician_shift_week,technician_shift_roster.group_technician_user,1,0,0,0
+access_shift_tech,technician.shift technician,model_technician_shift,technician_shift_roster.group_technician_user,1,0,0,0
+
+access_technician_shift_slot_admin,technician.shift.slot admin,model_technician_shift_slot,base.group_system,1,0,0,0
+access_technician_shift_slot_manager,technician.shift.slot manager,model_technician_shift_slot,technician_shift_roster.group_technician_manager,1,0,0,0
+access_technician_shift_slot_store,technician.shift.slot store manager,model_technician_shift_slot,technician_shift_roster.group_store_manager,1,0,0,0
+access_technician_shift_slot_technician,technician.shift.slot technician,model_technician_shift_slot,technician_shift_roster.group_technician_user,1,0,0,0
+
+access_hr_work_location_admin,hr.work.location admin,model_hr_work_location,technician_shift_roster.group_technician_admin,1,1,1,1
+access_hr_work_location_manager,hr.work.location manager,model_hr_work_location,technician_shift_roster.group_technician_manager,1,1,1,1
+access_hr_work_location_store,hr.work.location store manager,model_hr_work_location,technician_shift_roster.group_store_manager,1,0,0,0
+access_hr_work_location_technician,hr.work.location technician,model_hr_work_location,technician_shift_roster.group_technician_user,1,0,0,0
+
+
+
+

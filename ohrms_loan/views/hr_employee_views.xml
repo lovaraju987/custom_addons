@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- <odoo>
+    <record id="view_employee_form_inherit_loan" model="ir.ui.view">
+        <field name="name">hr.employee.view.form.inherit.loan</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='child_ids']" position="before">
+                <field name="loan_count" widget="statinfo" string="Loans"/>
+                <field name="total_loan_amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo> -->
+
+<odoo>
+    <record id="view_employee_form_inherit_loan" model="ir.ui.view">
+        <field name="name">hr.employee.view.form.inherit.loan</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <!-- Add after the main sheet content -->
+            <xpath expr="//sheet" position="before">
+                <div class="oe_button_box" name="button_box">
+                    <button name="action_loan_view" type="object" 
+                            class="oe_stat_button" icon="fa-money">
+                        <field name="loan_count" widget="statinfo" string="Loans"/>
+                    </button>
+                </div>
+            </xpath>
+            
+            <!-- Add loan section at the end of the form -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Loans">
+                    <field name="pending_loan_ids">
+                        <tree>
+                            <field name="name"/>
+                            <field name="loan_amount"/>
+                            <field name="balance_amount"/>
+                            <field name="state"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

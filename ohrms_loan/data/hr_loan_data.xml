@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_loan_default_max_amount" model="ir.config_parameter">
+        <field name="key">hr_loan.max_loan_amount</field>
+        <field name="value">20000</field>
+    </record>
+</odoo>

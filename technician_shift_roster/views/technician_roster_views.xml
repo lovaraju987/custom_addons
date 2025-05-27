@@ -1,0 +1,191 @@
+<odoo>
+    <record id="view_shift_week_form" model="ir.ui.view">
+        <field name="name">technician.shift.week.form</field>
+        <field name="model">technician.shift.week</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_confirm" type="object" string="Confirm Roster"
+                            invisible="state != 'draft'" class="btn btn-primary"/>
+
+                    <button name="action_reset_to_draft" type="object" string="Reset to Draft"
+                            invisible="state != 'confirmed'" class="btn btn-secondary"/>
+                </header>
+
+                <group>
+                    <field name="state" invisible="1"/> <!-- ✅ Required for conditional logic -->
+
+                    <field name="month" readonly="state == 'confirmed'"/>
+                    <field name="year" readonly="state == 'confirmed'"/>
+                    <field name="week_start" readonly="state == 'confirmed'"/>
+                    <field name="week_end" readonly="state == 'confirmed'"/>
+                    <field name="work_location_id" readonly="state == 'confirmed'"/>
+                    <field name="manager_id" readonly="state == 'confirmed'"/>
+                    <field name="technician_ids" widget="many2many_tags" readonly="state == 'confirmed'"/>
+                </group>
+
+                <notebook>
+                    <page string="Shifts">
+                        <field name="shift_ids">
+                            <tree editable="bottom">
+                                <field name="state" readonly="1"/> <!-- ✅ Required for conditional logic -->
+                                <field name="date" readonly="state == 'confirmed'"/>
+                                <field name="technician_id" readonly="state == 'confirmed'"/>
+                                <field name="working_type" readonly="state == 'confirmed'"/>
+                                <field name="status"/>
+                                <field name="slot_ids" widget="many2many_tags"/>
+                                <field name="reason"/>
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
+            </form>
+        </field>
+    </record>
+
+
+    <record id="view_shift_week_tree" model="ir.ui.view">
+        <field name="name">technician.shift.week.tree</field>
+        <field name="model">technician.shift.week</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="roster_status == 'active'"
+                    decoration-primary="roster_status == 'future'"
+                    decoration-danger="roster_status == 'expired'">
+                <field name="state" readonly="1"/> <!-- ✅ Required for conditional logic -->
+
+                <field name="name"/>
+                <!-- <field name="month"/>
+                <field name="year"/>
+                <field name="week_start"/>
+                <field name="week_end"/> -->
+                <field name="work_location_id"/>
+                <field name="manager_id"/>
+                <field name="roster_status" widget="badge"/>
+
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_shift_week_filter" model="ir.ui.view">
+        <field name="name">technician.shift.week.search</field>
+        <field name="model">technician.shift.week</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter string="Active" name="filter_active" domain="[('roster_status','=','active')]"/>
+                <filter string="Future" name="filter_future" domain="[('roster_status','=','future')]"/>
+                <filter string="Expired" name="filter_expired" domain="[('roster_status','=','expired')]"/>
+            </search>
+        </field>
+    </record>
+
+
+    <record id="view_hr_work_location_with_technicians" model="ir.ui.view">
+        <field name="name">hr.work.location.form.technicians</field>
+        <field name="model">hr.work.location</field>
+        <field name="arch" type="xml">
+            <form string="Work Location with Technicians">
+                <sheet>
+                    <group>
+                        <field name="name" required="1"/>
+                        <field name="company_id" invisible="1"/> <!-- Required for address_id domain -->
+
+                        <field name="address_id" required="1"/>
+                        <field name="default_manager_id"/>
+                        <field name="default_technician_ids" widget="many2many_tags"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_hr_work_location_with_technicians" model="ir.actions.act_window">
+        <field name="name">Work Locations + Technicians</field>
+        <field name="res_model">hr.work.location</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+<!-- kanban view -->
+    <record id="view_shift_week_kanban" model="ir.ui.view">
+        <field name="name">technician.shift.week.kanban</field>
+        <field name="model">technician.shift.week</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_example">
+                <field name="name"/>
+                <field name="month"/>
+                <field name="year"/>
+                <field name="state"/>
+                <field name="week_start"/>
+                <field name="week_end"/>
+                <field name="roster_status"/>
+
+                <templates>
+                    <t t-name="kanban-box">
+                    <div class="o_kanban_card">
+                        <strong><field name="name"/></strong><br/>
+                        <div><b>Start:</b> <field name="week_start"/></div>
+                        <div><b>End:</b> <field name="week_end"/></div>
+                        <div><b>Status:</b> <field name="roster_status" widget="badge"/></div>
+                    </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+
+    <!-- pivot view -->
+    <record id="view_technician_shift_pivot" model="ir.ui.view">
+        <field name="name">technician.shift.pivot</field>
+        <field name="model">technician.shift</field>
+        <field name="arch" type="xml">
+            <pivot string="Technician Shifts Analysis">
+                <field name="date" type="row"/>
+                <field name="technician_id" type="col"/>
+                <field name="status" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- graph view -->
+    <record id="view_technician_shift_graph" model="ir.ui.view">
+        <field name="name">technician.shift.graph</field>
+        <field name="model">technician.shift</field>
+        <field name="arch" type="xml">
+            <graph string="Technician Shifts Overview" type="bar">
+                <field name="date" type="row"/>
+                <field name="technician_id" type="col"/>
+                <field name="status" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+
+
+
+
+
+
+    <record id="action_technician_shift_week" model="ir.actions.act_window">
+        <field name="name">Technician Shift Weeks</field>
+        <field name="res_model">technician.shift.week</field>
+        <field name="view_mode">tree,form,kanban,pivot,graph</field>
+    </record>
+
+    <menuitem id="menu_technician_shift_root" name="Technician Roster" sequence="10"/>
+
+    <menuitem id="menu_technician_shift_weeks"
+              name="Shift Weeks"
+              parent="menu_technician_shift_root"
+              action="action_technician_shift_week"
+              sequence="10"/>
+
+    <!-- Work Locations menu -->
+    <menuitem id="menu_work_locations_with_technicians"
+            name="Work Locations"
+            parent="menu_technician_shift_root"
+            action="action_hr_work_location_with_technicians"
+            sequence="20"
+            groups="technician_shift_roster.group_technician_admin,technician_shift_roster.group_technician_manager,technician_shift_roster.group_store_manager"/>
+
+</odoo>
