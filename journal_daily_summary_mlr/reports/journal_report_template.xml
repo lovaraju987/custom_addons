@@ -4,21 +4,21 @@
         <t t-call="web.basic_layout">
             <div class="page">
                 <t t-foreach="docs" t-as="doc">
-                    <h2>Journal Daily Summary for <t t-esc="doc.report_date"/></h2>
+                    <h2>Payments Summary for <t t-esc="doc.report_date"/></h2>
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>Account</th>
-                                <th>Debit</th>
-                                <th>Credit</th>
+                                <th>Payment Ref</th>
+                                <th>Partner</th>
+                                <th>Amount</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <t t-foreach="doc.entry_lines" t-as="line">
+                            <t t-foreach="doc.payment_lines" t-as="pay">
                                 <tr>
-                                    <td><t t-esc="line.account_id.name"/></td>
-                                    <td><t t-esc="line.debit"/></td>
-                                    <td><t t-esc="line.credit"/></td>
+                                    <td><t t-esc="pay.name"/></td>
+                                    <td><t t-esc="pay.partner_id.name"/></td>
+                                    <td><t t-esc="pay.amount"/></td>
                                 </tr>
                             </t>
                         </tbody>

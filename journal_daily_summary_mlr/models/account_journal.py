@@ -10,31 +10,31 @@ class AccountJournal(models.Model):
         help="Contact responsible for this journal (used for WhatsApp)"
     )
 
-    entry_lines = fields.One2many(
-        'account.move.line',
+    payment_lines = fields.One2many(
+        'account.payment',
         'journal_id',
-        string='Entry Lines',
-        compute='_compute_daily_entries',
-        store=True   # Changed to store=True for testing
+        string='Payment Lines',
+        compute='_compute_daily_payments',
+        store=True   # For testing purposes.
     )
 
     report_date = fields.Date(
         string="Report Date",
-        compute='_compute_daily_entries',
-        store=True   # Changed to store=True for testing
+        compute='_compute_daily_payments',
+        store=True    # For testing purposes; later adjust as needed.
     )
 
     @api.depends('journal_owner_id')
-    def _compute_daily_entries(self):
-        # Temporarily use current day for testing
+    def _compute_daily_payments(self):
+        # Temporarily using current day for testing
         report_day = fields.Date.context_today(self)
         for journal in self:
             journal.report_date = report_day
-            move_lines = self.env['account.move.line'].search([
+            payments = self.env['account.payment'].search([
                 ('journal_id', '=', journal.id),
-                ('date', '=', report_day)
+                ('payment_date', '=', report_day)
             ])
-            journal.entry_lines = move_lines
+            journal.payment_lines = payments
 
     def print_journal_summary_report(self):
         # Return a report action
