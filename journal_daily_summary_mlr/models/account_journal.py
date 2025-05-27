@@ -15,26 +15,27 @@ class AccountJournal(models.Model):
         'journal_id',
         string='Entry Lines',
         compute='_compute_daily_entries',
-        store=False
+        store=True   # Changed to store=True for testing
     )
 
     report_date = fields.Date(
         string="Report Date",
         compute='_compute_daily_entries',
-        store=False
+        store=True   # Changed to store=True for testing
     )
 
     @api.depends('journal_owner_id')
     def _compute_daily_entries(self):
-        today = fields.Date.context_today(self)
-        report_day = fields.Date.from_string(today) - timedelta(days=1)
+        # Temporarily use current day for testing
+        report_day = fields.Date.context_today(self)
         for journal in self:
             journal.report_date = report_day
-            journal.entry_lines = self.env['account.move.line'].search([
+            move_lines = self.env['account.move.line'].search([
                 ('journal_id', '=', journal.id),
                 ('date', '=', report_day)
             ])
+            journal.entry_lines = move_lines
 
     def print_journal_summary_report(self):
-        return self.env.ref('journal_daily_summary_mlr.action_report_journal_daily_summary') \
-                   .report_action(self, data={'download': True})
+        # Return a report action
+        return self.env.ref('journal_daily_summary_mlr.action_report_journal_daily_summary').report_action(self)

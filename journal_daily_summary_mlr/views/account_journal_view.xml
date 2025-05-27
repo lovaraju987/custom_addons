@@ -7,12 +7,9 @@
         <field name="arch" type="xml">
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="print_journal_summary_report"
-                        string="Print Daily Summary"
                         type="object"
-                        class="btn-primary"/>
-            </xpath>
-            <xpath expr="//field[@name='name']" position="after">
-                <field name="journal_owner_id"/>
+                        class="oe_highlight"
+                        string="Print Summary"/>
             </xpath>
         </field>
     </record>
