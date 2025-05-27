@@ -13,4 +13,17 @@
             </xpath>
         </field>
     </record>
+    <record id="view_account_journal_form_inherit_owner" model="ir.ui.view">
+        <field name="name">account.journal.form.inherit.owner</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.view_account_journal_form"/>
+        <field name="arch" type="xml">
+            <!-- Insert the Journal Owner field inside the sheet, for example after the 'Name' field -->
+            <xpath expr="//sheet//group" position="before">
+                <group>
+                    <field name="journal_owner_id"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
 </odoo>
