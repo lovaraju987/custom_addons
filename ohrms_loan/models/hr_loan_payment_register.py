@@ -16,8 +16,7 @@ class HrLoanPaymentRegister(models.TransientModel):
         loan = self.env['hr.loan'].browse(active_id)
         if loan.state != 'approve':
             raise UserError(_("Payment can be registered only for approved loans."))
-        
-        # Use employee's user partner instead of address_home_id
+
         if not loan.employee_id or not loan.employee_id.user_id.partner_id:
             raise UserError(_("The loan's employee does not have an associated partner."))
         
@@ -29,13 +28,19 @@ class HrLoanPaymentRegister(models.TransientModel):
             'partner_id': partner.id,
             'amount': self.amount,
             'journal_id': self.journal_id.id,
-            'date': self.payment_date,  # correct field key for payment date
+            'date': self.payment_date,      # correct field key for payment date
             'payment_reference': _("Loan Payment for %s") % (loan.name),
         }
         payment = self.env['account.payment'].create(payment_vals)
         payment.action_post()  # post the payment
 
-        # Optional: mark one installment as paid (update this logic as needed)
+        new_total = loan.amount_released + self.amount
+        new_state = 'full_paid' if new_total >= loan.loan_amount else 'partial_paid'
+        loan.write({
+            'amount_released': new_total,
+            'state': new_state,
+        })
+
         loan_line = loan.loan_lines.filtered(lambda l: not l.paid)[:1]
         if loan_line:
             loan_line.write({'paid': True})
