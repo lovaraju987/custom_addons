@@ -217,12 +217,12 @@ class HrLoan(models.Model):
         if self.state != 'approve':
             raise UserError(_("Payment can be registered only after the loan is approved."))
         return {
-            'name': _("Register Payment"),
+            'name': _("Register Loan Payment"),
             'type': 'ir.actions.act_window',
-            'res_model': 'account.payment.register',
+            'res_model': 'hr.loan.payment.register',
             'view_mode': 'form',
-            'context': {'active_model': 'hr.loan', 'active_id': self.id},
             'target': 'new',
+            'context': {'active_id': self.id},
         }
 
 

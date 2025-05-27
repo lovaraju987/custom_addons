@@ -152,7 +152,7 @@
               name="Request for Loan"
               parent="hr_loan_menu_root"
               action="hr_loan_action"/>
-    <!-- Remove duplicate view definition if present. This single instance defines the view extension for loan form -->
+    <!-- Remove duplicate view definition if present; use only this one -->
     <record id="view_hr_loan_form_inherit_payment" model="ir.ui.view">
         <field name="name">hr.loan.form.inherit.payment</field>
         <field name="model">hr.loan</field>

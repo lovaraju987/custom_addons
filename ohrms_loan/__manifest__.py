@@ -40,7 +40,8 @@
         'views/hr_loan_views.xml',
         'views/hr_payslip_views.xml',
         'views/hr_employee_views.xml',
-        'data/hr_loan_data.xml'
+        'data/hr_loan_data.xml',
+        'views/hr_loan_payment_register_views.xml',
     ],
     'demo': ['data/hr_salary_rule_demo.xml',
              'data/hr_rule_input_demo.xml', ],
