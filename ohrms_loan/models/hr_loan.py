@@ -55,7 +55,8 @@ class HrLoan(models.Model):
     date = fields.Date(string="Date", default=fields.Date.today(),
                        readonly=True, help="Date of the loan request")
     employee_id = fields.Many2one('hr.employee', string="Employee",
-                                  required=True, help="Employee Name")
+                                  required=True, help="Employee Name",
+                                  default=lambda self: self.env.user.employee_id)
     department_id = fields.Many2one('hr.department',
                                     related="employee_id.department_id",
                                     readonly=True,
