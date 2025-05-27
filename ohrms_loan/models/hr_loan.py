@@ -22,41 +22,36 @@
 #############################################################################
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from odoo import api, fields, models, _
+from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 
 
 class HrLoan(models.Model):
-    """ Model for managing loan requests."""
-    _name = 'hr.loan'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _name = "hr.loan"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _description = "Loan Request"
-
-    @api.model
-    def default_get(self, field_list):
-        """ Function used to pass employee corresponding to current login user
-            as default employee while creating new loan request
-            :param field_list : Fields and values for the model hr.loan"""
-        result = super(HrLoan, self).default_get(field_list)
-        if result.get('user_id'):
-            user_id = result['user_id']
-        else:
-            user_id = self.env.context.get('user_id', self.env.user.id)
-        result['employee_id'] = self.env['hr.employee'].search(
-            [('user_id', '=', user_id)], limit=1).id
-        return result
     
-    #     # Add this new field at the class level
-    # max_loan_amount = fields.Float(string="Maximum Loan Amount",
-    #                               default=20000,  # Set your default max amount
-    #                               help="Maximum total loan amount allowed for an employee")
-
+    # New fields for payment tracking:
+    loan_amount = fields.Float(string="Loan Amount", required=True)
+    amount_released = fields.Float(string="Amount Released", default=0.0)
+    remaining_amount = fields.Float(string="Remaining Amount", compute="_compute_remaining_amount", store=True)
+    
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('waiting_approval_1', 'Waiting Approval'),
+        ('approve', 'Approved'),
+        ('partial_paid', 'Partial Payment Released'),
+        ('full_paid', 'Full Payment Released'),
+        ('refuse', 'Refused')
+    ], default='draft', tracking=True)
+    
     name = fields.Char(string="Loan Name", default="New", readonly=True,
                        help="Name of the loan")
     date = fields.Date(string="Date", default=fields.Date.today(),
                        readonly=True, help="Date of the loan request")
     employee_id = fields.Many2one('hr.employee', string="Employee",
-                                  required=True, help="Employee Name")
+                                  required=True, help="Employee Name",
+                                  default=lambda self: self.env.user.employee_id)
     department_id = fields.Many2one('hr.department',
                                     related="employee_id.department_id",
                                     readonly=True,
@@ -84,8 +79,6 @@ class HrLoan(models.Model):
                                    related="employee_id.job_id",
                                    readonly=True, string="Job Position",
                                    help="Job position of the employee")
-    loan_amount = fields.Float(string="Loan Amount", required=True,
-                               help="Loan amount")
     total_amount = fields.Float(string="Total Amount", store=True,
                                 readonly=True, compute='_compute_total_amount',
                                 help="The total amount of the loan")
@@ -98,11 +91,11 @@ class HrLoan(models.Model):
                                      compute='_compute_total_amount',
                                      help="The total amount that has been "
                                           "paid towards the loan.")
-    state = fields.Selection(
-        [('draft', 'Draft'), ('waiting_approval_1', 'Submitted'),
-         ('approve', 'Approved'), ('refuse', 'Refused'), ('cancel', 'Canceled'),
-         ], string="State", default='draft', help="The current state of the "
-                                                  "loan request.", copy=False)
+
+    @api.depends('loan_amount', 'amount_released')
+    def _compute_remaining_amount(self):
+        for rec in self:
+            rec.remaining_amount = rec.loan_amount - rec.amount_released
 
     def _compute_total_amount(self):
         """ Compute total loan amount,balance amount and total paid amount"""
@@ -212,6 +205,19 @@ class HrLoan(models.Model):
                     'You cannot delete a loan which is not in draft '
                     'or cancelled state'))
         return super(HrLoan, self).unlink()
+
+    def register_payment(self):
+        self.ensure_one()
+        if self.state not in [ 'approve', 'partial_paid' ] :
+            raise UserError(_("Payment can be registered only after the loan is approved or in partial payment stage."))
+        return {
+            'name': _("Register Loan Payment"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hr.loan.payment.register',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'active_id': self.id},
+        }
 
 
 class HrLoanLine(models.Model):

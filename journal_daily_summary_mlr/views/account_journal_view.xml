@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_journal_form_inherit_report_button" model="ir.ui.view">
+        <field name="name">account.journal.form.inherit.report.button</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.view_account_journal_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="print_journal_summary_report"
+                        type="object"
+                        class="oe_highlight"
+                        string="Print Summary"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_account_journal_form_inherit_owner" model="ir.ui.view">
+        <field name="name">account.journal.form.inherit.owner</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.view_account_journal_form"/>
+        <field name="arch" type="xml">
+            <!-- Insert the Journal Owner field inside the sheet, for example after the 'Name' field -->
+            <xpath expr="//sheet//group" position="before">
+                <group>
+                    <field name="journal_owner_id"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
