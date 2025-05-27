@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_journal_form_inherit_report_button" model="ir.ui.view">
+        <field name="name">account.journal.form.inherit.report.button</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.view_account_journal_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="print_journal_summary_report"
+                        string="Print Daily Summary"
+                        type="object"
+                        class="btn-primary"/>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="journal_owner_id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="report_journal_daily_summary">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="journal">
+                <div class="page">
+                    <h2>Daily Journal Summary</h2>
+                    <p><strong>Journal:</strong> <t t-esc="journal.name"/></p>
+                    <p><strong>Date:</strong> <t t-esc="journal.report_date.strftime('%d-%m-%Y')"/></p>
+                    <p><strong>Owner:</strong> <t t-esc="journal.journal_owner_id.name or 'N/A'"/></p>
+
+                    <table class="table table-sm table-bordered mt32">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Date</th>
+                                <th>Partner</th>
+                                <th>Description</th>
+                                <th>Debit</th>
+                                <th>Credit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-set="counter" t-value="1"/>
+                            <t t-foreach="journal.entry_lines" t-as="line">
+                                <tr>
+                                    <td><t t-esc="counter"/></td>
+                                    <td><t t-esc="line.date"/></td>
+                                    <td><t t-esc="line.partner_id.name or ''"/></td>
+                                    <td><t t-esc="line.name"/></td>
+                                    <td><t t-esc="'%.2f' % line.debit"/></td>
+                                    <td><t t-esc="'%.2f' % line.credit"/></td>
+                                </tr>
+                                <t t-set="counter" t-value="counter + 1"/>
+                            </t>
+                        </tbody>
+                    </table>
+
+                    <p class="mt32">
+                        <strong>Total Debit:</strong> <t t-esc="'%.2f' % sum(line.debit for line in journal.entry_lines)"/>
+                        |
+                        <strong>Total Credit:</strong> <t t-esc="'%.2f' % sum(line.credit for line in journal.entry_lines)"/>
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>
