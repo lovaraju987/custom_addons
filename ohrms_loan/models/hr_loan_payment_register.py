@@ -10,16 +10,29 @@ class HrLoanPaymentRegister(models.TransientModel):
                                  help="Select the journal for payment")
     payment_date = fields.Date(string="Payment Date", default=fields.Date.today, required=True)
 
+    @api.model
+    def default_get(self, fields_list):
+        res = super(HrLoanPaymentRegister, self).default_get(fields_list)
+        active_id = self.env.context.get('active_id')
+        loan = self.env['hr.loan'].browse(active_id)
+        if loan:
+            res.update({'amount': loan.remaining_amount})
+        return res
+
     def action_create_payment(self):
         self.ensure_one()
         active_id = self.env.context.get('active_id')
         loan = self.env['hr.loan'].browse(active_id)
-        if loan.state != 'approve':
-            raise UserError(_("Payment can be registered only for approved loans."))
+        if loan.state not in ['approve', 'partial_paid']:
+            raise UserError(_("Payment can be registered only for approved or partially paid loans."))
 
         if not loan.employee_id or not loan.employee_id.user_id.partner_id:
             raise UserError(_("The loan's employee does not have an associated partner."))
-        
+
+        # Prevent payment from exceeding the remaining amount
+        if self.amount > loan.remaining_amount:
+            raise UserError(_("Cannot register a payment more than the remaining amount (%s).") % loan.remaining_amount)
+
         partner = loan.employee_id.user_id.partner_id
 
         payment_vals = {
@@ -28,7 +41,7 @@ class HrLoanPaymentRegister(models.TransientModel):
             'partner_id': partner.id,
             'amount': self.amount,
             'journal_id': self.journal_id.id,
-            'date': self.payment_date,      # correct field key for payment date
+            'date': self.payment_date,
             'payment_reference': _("Loan Payment for %s") % (loan.name),
         }
         payment = self.env['account.payment'].create(payment_vals)

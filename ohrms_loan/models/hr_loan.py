@@ -208,8 +208,8 @@ class HrLoan(models.Model):
 
     def register_payment(self):
         self.ensure_one()
-        if self.state != 'approve':
-            raise UserError(_("Payment can be registered only after the loan is approved."))
+        if self.state not in [ 'approve', 'partial_paid' ] :
+            raise UserError(_("Payment can be registered only after the loan is approved or in partial payment stage."))
         return {
             'name': _("Register Loan Payment"),
             'type': 'ir.actions.act_window',
