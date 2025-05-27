@@ -4,10 +4,14 @@
         <t t-call="web.basic_layout">
             <div class="page">
                 <t t-foreach="docs" t-as="doc">
-                    <!-- Wrap the report_date in a span for proper formatting -->
+                    <!-- Headline with Journal Name and Report Date -->
                     <h2>
                         Payments Summary for <t t-esc="doc.name"/> on <span t-field="doc.report_date"/>
                     </h2>
+                    <!-- Display Journal Owner -->
+                    <p>
+                        <strong>Journal Owner:</strong> <t t-esc="doc.journal_owner_id.name"/>
+                    </p>
                     <table class="table table-sm">
                         <thead>
                             <tr>
