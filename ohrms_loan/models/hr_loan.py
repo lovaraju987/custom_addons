@@ -22,14 +22,13 @@
 #############################################################################
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from odoo import api, fields, models, _
+from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 
 
 class HrLoan(models.Model):
-    """ Model for managing loan requests."""
-    _name = 'hr.loan'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _name = "hr.loan"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _description = "Loan Request"
 
     @api.model
@@ -212,6 +211,19 @@ class HrLoan(models.Model):
                     'You cannot delete a loan which is not in draft '
                     'or cancelled state'))
         return super(HrLoan, self).unlink()
+
+    def register_payment(self):
+        self.ensure_one()
+        if self.state != 'approve':
+            raise UserError(_("Payment can be registered only after the loan is approved."))
+        return {
+            'name': _("Register Payment"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.payment.register',
+            'view_mode': 'form',
+            'context': {'active_model': 'hr.loan', 'active_id': self.id},
+            'target': 'new',
+        }
 
 
 class HrLoanLine(models.Model):
