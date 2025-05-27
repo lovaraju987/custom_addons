@@ -10,7 +10,8 @@
                             <tr>
                                 <th>Payment Ref</th>
                                 <th>Partner</th>
-                                <th>Amount</th>
+                                <th>Sent</th>
+                                <th>Received</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -18,7 +19,16 @@
                                 <tr>
                                     <td><t t-esc="pay.name"/></td>
                                     <td><t t-esc="pay.partner_id.name"/></td>
-                                    <td><t t-esc="pay.amount"/></td>
+                                    <td>
+                                        <t t-if="pay.payment_type == 'outbound'">
+                                            <t t-esc="- pay.amount"/>
+                                        </t>
+                                    </td>
+                                    <td>
+                                        <t t-if="pay.payment_type == 'inbound'">
+                                            <t t-esc="pay.amount"/>
+                                        </t>
+                                    </td>
                                 </tr>
                             </t>
                         </tbody>
