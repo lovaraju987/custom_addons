@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_journal_daily_summary" model="ir.actions.report">
+        <field name="name">Journal Daily Summary</field>
+        <field name="model">account.journal</field>
+        <field name="report_name">journal_daily_summary_mlr.report_journal_daily_summary</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

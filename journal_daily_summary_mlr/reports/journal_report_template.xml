@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="report_journal_daily_summary">
+        <t t-call="web.basic_layout">
+            <div class="page">
+                <t t-foreach="docs" t-as="doc">
+                    <!-- Headline with Journal Name and Report Date -->
+                    <h2>
+                        Payments Summary for <t t-esc="doc.name"/> on <span t-field="doc.report_date"/>
+                    </h2>
+                    <!-- Display Journal Owner -->
+                    <p>
+                        <strong>Journal Owner:</strong> <t t-esc="doc.journal_owner_id.name"/>
+                    </p>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Payment Ref</th>
+                                <th>Partner</th>
+                                <th>Sent</th>
+                                <th>Received</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="doc.payment_lines" t-as="pay">
+                                <tr>
+                                    <td><t t-esc="pay.name"/></td>
+                                    <td><t t-esc="pay.partner_id.name"/></td>
+                                    <td>
+                                        <t t-if="pay.payment_type == 'outbound'">
+                                            <t t-esc="- pay.amount"/>
+                                        </t>
+                                    </td>
+                                    <td>
+                                        <t t-if="pay.payment_type == 'inbound'">
+                                            <t t-esc="pay.amount"/>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                    <!-- Summary Section -->
+                    <br/>
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <td><strong>Current Balance:</strong></td>
+                                <td><t t-esc="doc.current_balance"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Received Today:</strong></td>
+                                <td><t t-esc="doc.total_received_today"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Sent Today:</strong></td>
+                                <td><t t-esc="doc.total_sent_today"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+            </div>
+        </t>
+    </template>
+</odoo>
