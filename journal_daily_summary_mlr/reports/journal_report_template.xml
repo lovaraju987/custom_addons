@@ -33,6 +33,24 @@
                             </t>
                         </tbody>
                     </table>
+                    <!-- Summary Section -->
+                    <br/>
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <td><strong>Current Balance:</strong></td>
+                                <td><t t-esc="doc.current_balance"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Received Today:</strong></td>
+                                <td><t t-esc="doc.total_received_today"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Sent Today:</strong></td>
+                                <td><t t-esc="doc.total_sent_today"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </t>
             </div>
         </t>
