@@ -225,15 +225,10 @@ class HrLoanLine(models.Model):
     _name = "hr.loan.line"
     _description = "Installment Line"
 
-    date = fields.Date(string="Payment Date", required=True,
-                       help="Date of the payment")
-    employee_id = fields.Many2one('hr.employee', string="Employee",
-                                  help="Employee")
+    date = fields.Date(string="Payment Date", required=True, help="Date of the payment")
+    employee_id = fields.Many2one('hr.employee', string="Employee", help="Employee")
     amount = fields.Float(string="Amount", required=True, help="Amount")
-    paid = fields.Boolean(string="Paid", help="Indicates whether the "
-                                              "installment has been paid.")
-    loan_id = fields.Many2one('hr.loan', string="Loan Ref.",
-                              help="Reference to the associated loan.")
-    payslip_id = fields.Many2one('hr.payslip', string="Payslip Ref.",
-                                 help="Reference to the associated "
-                                      "payslip, if any.")
+    paid = fields.Boolean(string="Paid", help="Deducted from payslip")
+    released = fields.Boolean(string="Released", help="Loan amount released to employee")  # NEW FIELD
+    loan_id = fields.Many2one('hr.loan', string="Loan Ref.", help="Reference to the associated loan.")
+    payslip_id = fields.Many2one('hr.payslip', string="Payslip Ref.", help="Reference to the associated payslip, if any.")

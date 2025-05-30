@@ -16,28 +16,24 @@ class HrPayslip(models.Model):
         the payslip."""
 
         res = super(HrPayslip, self).get_inputs(contract_ids, date_from, date_to)
-        loan_lines = self.env['hr.loan.line']  # Initialize loan_lines here
-
         if contract_ids:
             employee_id = self.env['hr.contract'].browse(contract_ids[0].id).employee_id
             loan_lines = self.env['hr.loan.line'].search([
                 ('employee_id', '=', employee_id.id),
                 ('date', '>=', date_from),
                 ('date', '<=', date_to),
-                ('paid', '=', False),
-                ('loan_id.state', 'in', ['partial_paid', 'full_paid'])
-
-        ])
-
-        for loan_line in loan_lines:
-            res.append({
-                'code': 'LO',
-                'amount': loan_line.amount,
-                'loan_line_id': loan_line.id,
-                'contract_id': contract_ids[0].id,  # Add contract_id
-                'name': "Loan", 
-            })
-
+                ('released', '=', True),  # Only released lines
+                ('paid', '=', False),     # Not yet deducted
+                ('loan_id.state', 'in', ['approve', 'partial_paid', 'full_paid'])
+            ])
+            for loan_line in loan_lines:
+                res.append({
+                    'code': 'LO',
+                    'amount': loan_line.amount,
+                    'loan_line_id': loan_line.id,
+                    'contract_id': contract_ids[0].id,
+                    'name': "Loan",
+                })
         return res
 
     
