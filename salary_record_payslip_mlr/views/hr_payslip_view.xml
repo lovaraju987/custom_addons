@@ -1,0 +1,16 @@
+<odoo>
+    <record id="view_hr_payslip_form_salary_payment" model="ir.ui.view">
+        <field name="name">hr.payslip.form.salary.payment</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll_community.hr_payslip_view_form"/>
+        <field name="arch" type="xml">
+            <header position="inside">
+                <button name="action_record_salary_payment"
+                        string="Record Salary Payment"
+                        type="object"
+                        if="record.state.raw_value == 'done'"
+                        class="btn-primary"/>
+            </header>
+        </field>
+    </record>
+</odoo>
