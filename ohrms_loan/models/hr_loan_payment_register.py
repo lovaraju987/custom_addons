@@ -29,15 +29,14 @@ class HrLoanPaymentRegister(models.TransientModel):
         if not loan.employee_id or not loan.employee_id.user_id.partner_id:
             raise UserError(_("The loan's employee does not have an associated partner."))
 
-        # Prevent payment from exceeding the remaining amount
         if self.amount > loan.remaining_amount:
             raise UserError(_("Cannot register a payment more than the remaining amount (%s).") % loan.remaining_amount)
 
         partner = loan.employee_id.user_id.partner_id
 
         payment_vals = {
-            'payment_type': 'outbound',  # assuming outbound payment for loan repayment
-            'partner_type': 'supplier',   # adjust if needed
+            'payment_type': 'outbound',
+            'partner_type': 'supplier',
             'partner_id': partner.id,
             'amount': self.amount,
             'journal_id': self.journal_id.id,
@@ -45,7 +44,7 @@ class HrLoanPaymentRegister(models.TransientModel):
             'payment_reference': _("Loan Payment for %s") % (loan.name),
         }
         payment = self.env['account.payment'].create(payment_vals)
-        payment.action_post()  # post the payment
+        payment.action_post()
 
         new_total = loan.amount_released + self.amount
         new_state = 'full_paid' if new_total >= loan.loan_amount else 'partial_paid'
@@ -54,8 +53,13 @@ class HrLoanPaymentRegister(models.TransientModel):
             'state': new_state,
         })
 
-        loan_line = loan.loan_lines.filtered(lambda l: not l.paid)[:1]
-        if loan_line:
-            loan_line.write({'paid': True})
-            
+        # Mark released lines
+        unreleased_lines = loan.loan_lines.filtered(lambda l: not l.released)
+        remaining = self.amount
+        for line in unreleased_lines:
+            if remaining <= 0:
+                break
+            line.write({'released': True})
+            remaining -= line.amount
+
         return {'type': 'ir.actions.act_window_close'}
