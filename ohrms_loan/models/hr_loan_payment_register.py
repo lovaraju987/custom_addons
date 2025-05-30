@@ -32,7 +32,10 @@ class HrLoanPaymentRegister(models.TransientModel):
         if self.amount > loan.remaining_amount:
             raise UserError(_("Cannot register a payment more than the remaining amount (%s).") % loan.remaining_amount)
 
-        partner = loan.employee_id.user_id.partner_id
+        # Get the partner: prefer user_id.partner_id, fallback to address_id
+        partner = loan.employee_id.user_id.partner_id or loan.employee_id.address_id
+        if not partner:
+            raise UserError(_("The loan's employee does not have an associated partner."))
 
         payment_vals = {
             'payment_type': 'outbound',

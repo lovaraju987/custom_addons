@@ -1,0 +1,1 @@
+from . import account_payment, hr_payslip, hr_pending_salary
