@@ -28,8 +28,14 @@ class HrPayslipSalaryPaymentWizard(models.TransientModel):
             'payment_reference': f'Salary Payment for Payslip {payslip.number or payslip.name}',
         })
         payment.action_post()
-
-        # Track total paid and update payslip state
-        payslip._compute_salary_paid_state()
+        # Update payslip state after payment
+        net = payslip._get_net_amount()
+        paid = payslip.salary_paid_amount + self.amount
+        if paid >= net and net > 0:
+            payslip.write({'state': 'salary_settled_full'})
+        elif 0 < paid < net:
+            payslip.write({'state': 'salary_settled_partial'})
+        elif paid == 0:
+            payslip.write({'state': 'done'})
 
         return {'type': 'ir.actions.act_window_close'}

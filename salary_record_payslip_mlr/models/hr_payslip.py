@@ -24,12 +24,14 @@ class HrPayslip(models.Model):
 
     def _compute_salary_paid_state(self):
         for payslip in self:
-            total = payslip.salary_paid_amount
             net = payslip._get_net_amount()
-            if total >= net:
+            paid = payslip.salary_paid_amount
+            if paid >= net and net > 0:
                 payslip.state = 'salary_settled_full'
-            elif total > 0:
+            elif 0 < paid < net:
                 payslip.state = 'salary_settled_partial'
+            elif paid == 0:
+                payslip.state = 'done'
 
     def action_record_salary_payment(self):
         net_amount = self._get_net_amount()
@@ -45,3 +47,55 @@ class HrPayslip(models.Model):
                 'default_amount': net_amount - paid_amount,
             },
         }
+
+    def get_inputs(self, contract_ids, date_from, date_to):
+        res = super().get_inputs(contract_ids, date_from, date_to)
+        if contract_ids:
+            contract = self.env['hr.contract'].browse(contract_ids[0].id)
+            employee = contract.employee_id
+
+            # Find pending salary for this employee
+            pending_salary = self.env['hr.pending.salary'].search([
+                ('employee_id', '=', employee.id),
+                ('state', '=', 'pending')
+            ], limit=1)
+            if pending_salary:
+                res.append({
+                    'code': 'PEND_SAL',
+                    'amount': pending_salary.amount,
+                    'contract_id': contract.id,
+                    'name': "Pending Salary Recovery",
+                })
+        return res
+
+    def action_payslip_done(self):
+        res = super().action_payslip_done()
+        for payslip in self:
+            # Mark pending salary as paid if included in this payslip
+            pending_salary = self.env['hr.pending.salary'].search([
+                ('employee_id', '=', payslip.employee_id.id),
+                ('state', '=', 'pending')
+            ])
+            for rec in pending_salary:
+                rec.write({'state': 'paid', 'payslip_id': payslip.id})
+        return res
+
+    # Add this logic after payment registration
+
+    def _create_pending_salary_if_needed(self):
+        for payslip in self:
+            net = payslip._get_net_amount()
+            paid = payslip.salary_paid_amount
+            if paid < net:
+                # Check if already exists
+                existing = self.env['hr.pending.salary'].search([
+                    ('employee_id', '=', payslip.employee_id.id),
+                    ('state', '=', 'pending')
+                ])
+                if not existing:
+                    self.env['hr.pending.salary'].create({
+                        'employee_id': payslip.employee_id.id,
+                        'amount': net - paid,
+                        'payslip_id': payslip.id,
+                        'state': 'pending'
+                    })
