@@ -152,4 +152,33 @@
               name="Request for Loan"
               parent="hr_loan_menu_root"
               action="hr_loan_action"/>
+    <!-- Remove duplicate view definition if present; use only this one -->
+    <record id="view_hr_loan_form_inherit_payment" model="ir.ui.view">
+        <field name="name">hr.loan.form.inherit.payment</field>
+        <field name="model">hr.loan</field>
+        <field name="inherit_id" ref="hr_loan_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/header" position="inside">
+                <button name="register_payment"
+                        type="object"
+                        string="Register Payment"
+                        class="oe_highlight"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_hr_loan_form_inherit_payment_amounts" model="ir.ui.view">
+        <field name="name">hr.loan.form.inherit.payment.amounts</field>
+        <field name="model">hr.loan</field>
+        <field name="inherit_id" ref="hr_loan_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="after">
+                <group>
+                    <group>
+                        <field name="amount_released" readonly="1"/>
+                        <field name="remaining_amount" readonly="1"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
 </odoo>
