@@ -1,6 +1,7 @@
 from datetime import timedelta
 import logging
 import json
+import base64
 from odoo import models, fields, api
 
 _logger = logging.getLogger(__name__)
@@ -80,3 +81,34 @@ class AccountJournal(models.Model):
 
     def print_journal_summary_report(self):
         return self.env.ref('journal_daily_summary_mlr.action_report_journal_daily_summary').report_action(self)
+        
+
+
+    @api.model
+    def cron_send_journal_summary_whatsapp(self):
+        fallback_partner = self.env.user.partner_id
+        journals = self.search([])
+        for journal in journals:
+            partner = journal.journal_owner_id or fallback_partner
+            if not partner.mobile:
+                _logger.warning("No mobile for partner %s (journal %s)", partner.name, journal.name)
+                continue
+            try:
+                report = self.env.ref('journal_daily_summary_mlr.action_report_journal_daily_summary')._render_qweb_pdf(journal.id)[0]
+                attachment = self.env['ir.attachment'].create({
+                    'name': f'JournalSummary_{journal.name}.pdf',
+                    'type': 'binary',
+                    'datas': base64.b64encode(report),
+                    'res_model': 'account.journal',
+                    'res_id': journal.id,
+                    'mimetype': 'application/pdf',
+                })
+                self.env['wa.message.sender'].send_template(
+                    template_name='daily_journal_summary',
+                    partner=partner,
+                    attachment_id=attachment.id,
+                    context_model='account.journal',
+                    context_id=journal.id
+                )
+            except Exception as e:
+                _logger.error("Failed to send WhatsApp summary for journal %s: %s", journal.name, e)

@@ -18,7 +18,8 @@ Generate daily summary reports for each journal, linking journal owner to a cont
     'data': [
         'reports/journal_report_template.xml',
         'reports/journal_report.xml',
-        'views/account_journal_view.xml'
+        'views/account_journal_view.xml',
+        'data/ir_cron.xml',
     ],
 
     'installable': True,
