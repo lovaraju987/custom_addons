@@ -1,5 +1,6 @@
 from datetime import timedelta
 import logging
+import json
 from odoo import models, fields, api
 
 _logger = logging.getLogger(__name__)
@@ -59,24 +60,20 @@ class AccountJournal(models.Model):
     @api.depends('payment_lines', 'payment_lines.date', 'payment_lines.state', 'payment_lines.payment_type', 'payment_lines.amount')
     def _compute_payments_summary(self):
         for journal in self:
+            # Parse outstanding_pay_account_balance from kanban_dashboard
+            dashboard = json.loads(journal.kanban_dashboard or '{}')
+            balance_str = dashboard.get('outstanding_pay_account_balance', '0')
+            balance = float(balance_str.replace('₹', '').replace(',', '').strip() or 0.0)
+
             report_day = fields.Date.context_today(journal)
-            payments_all = self.env['account.payment'].search([
+            payments_today = self.env['account.payment'].search([
                 ('journal_id', '=', journal.id),
-                ('date', '<=', report_day),
+                ('date', '=', report_day),
                 ('state', '=', 'posted')
             ])
-            balance = 0.0
-            received = 0.0
-            sent = 0.0
-            for pay in payments_all:
-                if pay.payment_type == 'inbound':
-                    balance += pay.amount
-                    if pay.date == report_day:
-                        received += pay.amount
-                elif pay.payment_type == 'outbound':
-                    balance -= pay.amount
-                    if pay.date == report_day:
-                        sent += pay.amount
+            received = sum(pay.amount for pay in payments_today if pay.payment_type == 'inbound')
+            sent = sum(pay.amount for pay in payments_today if pay.payment_type == 'outbound')
+
             journal.current_balance = balance
             journal.total_received_today = received
             journal.total_sent_today = sent
