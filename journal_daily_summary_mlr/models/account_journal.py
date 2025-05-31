@@ -8,7 +8,7 @@ _logger = logging.getLogger(__name__)
 class AccountJournal(models.Model):
     _inherit = 'account.journal'
 
-    journal_owner_id = fields.Many2one(
+    partner_id = fields.Many2one(
         'res.partner',
         string='Journal Owner',
         help="Contact responsible for this journal (used for WhatsApp)"
@@ -21,13 +21,11 @@ class AccountJournal(models.Model):
         compute='_compute_daily_payments'
     )
 
-    # Change report_date to a Datetime field
     report_date = fields.Datetime(
         string="Report Date",
         compute='_compute_daily_payments'
     )
 
-    # New summary fields
     current_balance = fields.Float(
         string="Current Balance",
         compute="_compute_payments_summary"
@@ -41,7 +39,7 @@ class AccountJournal(models.Model):
         compute="_compute_payments_summary"
     )
 
-    @api.depends('journal_owner_id')
+    @api.depends('partner_id')
     def _compute_daily_payments(self):
         # Use today's date for search, but assign now() for report_date so time is included.
         report_day = fields.Date.context_today(self)
