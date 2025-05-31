@@ -10,7 +10,7 @@
                     </h2>
                     <!-- Display Journal Owner -->
                     <p>
-                        <strong>Journal Owner:</strong> <t t-esc="doc.journal_owner_id.name"/>
+                        <strong>Journal Owner:</strong> <t t-esc="doc.partner_id.name"/>
                     </p>
                     <table class="table table-sm">
                         <thead>

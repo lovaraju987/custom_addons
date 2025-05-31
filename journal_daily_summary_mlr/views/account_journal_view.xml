@@ -21,7 +21,7 @@
             <!-- Insert the Journal Owner field inside the sheet, for example after the 'Name' field -->
             <xpath expr="//sheet//group" position="before">
                 <group>
-                    <field name="journal_owner_id"/>
+                    <field name="partner_id" widget="many2one" options="{'no_open': True}"/>
                 </group>
             </xpath>
         </field>
