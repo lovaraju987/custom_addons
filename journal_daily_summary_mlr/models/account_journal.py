@@ -86,10 +86,13 @@ class AccountJournal(models.Model):
 
     @api.model
     def cron_send_journal_summary_whatsapp(self):
-        fallback_partner = self.env.user.partner_id
         journals = self.search([])
         for journal in journals:
-            partner = journal.journal_owner_id or fallback_partner
+            # Skip if no journal owner is set
+            if not journal.journal_owner_id:
+                _logger.info("Skipping journal %s: no journal owner set.", journal.name)
+                continue
+            partner = journal.journal_owner_id
             if not partner.mobile:
                 _logger.warning("No mobile for partner %s (journal %s)", partner.name, journal.name)
                 continue
