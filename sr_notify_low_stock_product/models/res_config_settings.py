@@ -70,8 +70,11 @@ class ResConfigSettings(models.TransientModel):
             res['min_qty_group_ids'] = [(6, 0, [])]
 
 
-        if self.env['ir.config_parameter'].sudo().get_param('sr_notify_low_stock_product.outgoing_mail_id'):
-            res['outgoing_mail_id'] = int(self.env['ir.config_parameter'].sudo().get_param('sr_notify_low_stock_product.outgoing_mail_id', default=0))
+        outgoing_mail_id_str = self.env['ir.config_parameter'].sudo().get_param('sr_notify_low_stock_product.outgoing_mail_id')
+        if outgoing_mail_id_str:
+            server = self.env['ir.mail_server'].sudo().browse(int(outgoing_mail_id_str))
+            if server.exists():
+                res['outgoing_mail_id'] = server.id
         res['apply_min_qty_on'] = self.env['ir.config_parameter'].sudo().get_param('sr_notify_low_stock_product.apply_min_qty_on')
         res['min_qty'] = float(self.env['ir.config_parameter'].sudo().get_param('sr_notify_low_stock_product.min_qty', default= 0.0))
         res['notify_to'] = self.env['ir.config_parameter'].sudo().get_param('sr_notify_low_stock_product.notify_to')
