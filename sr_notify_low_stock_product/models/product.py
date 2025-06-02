@@ -113,12 +113,12 @@ class ProductProduct(models.Model):
                         emails = set(user.email for user in user_ids if user.email)
                         values['email_to'] = ','.join(emails)
 
-                if self.env['ir.config_parameter'].sudo().get_param('sr_notify_low_stock_product.outgoing_mail_id'):
-                    server_id = self.env['ir.mail_server'].browse(int(
-                        self.env['ir.config_parameter'].sudo().get_param(
-                            'sr_notify_low_stock_product.outgoing_mail_id')))
-                    values['mail_server_id'] = server_id.id
-                    values['email_from'] = server_id.smtp_user
+                server_id_param = self.env['ir.config_parameter'].sudo().get_param('sr_notify_low_stock_product.outgoing_mail_id')
+                if server_id_param:
+                    server_id = self.env['ir.mail_server'].browse(int(server_id_param))
+                    if server_id.exists():
+                        values['mail_server_id'] = server_id.id
+                        values['email_from'] = server_id.smtp_user
 
                 email = self.env['mail.mail'].create(values)
                 email.send()
