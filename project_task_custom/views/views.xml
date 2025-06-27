@@ -1,198 +1,199 @@
 <odoo>
-  <data>
-    <!-- explicit list view definition -->
+ <data>
+   <!-- explicit list view definition -->
 <!--
-    <record model="ir.ui.view" id="project_task_custom.list">
-      <field name="name">project_task_custom list</field>
-      <field name="model">project_task_custom.project_task_custom</field>
-      <field name="arch" type="xml">
-        <tree>
-          <field name="name"/>
-          <field name="value"/>
-          <field name="value2"/>
-        </tree>
-      </field>
-    </record>
+   <record model="ir.ui.view" id="project_task_custom.list">
+     <field name="name">project_task_custom list</field>
+     <field name="model">project_task_custom.project_task_custom</field>
+     <field name="arch" type="xml">
+       <tree>
+         <field name="name"/>
+         <field name="value"/>
+         <field name="value2"/>
+       </tree>
+     </field>
+   </record>
 -->
 
-    <!-- actions opening views on models -->
+   <!-- actions opening views on models -->
 <!--
-    <record model="ir.actions.act_window" id="project_task_custom.action_window">
-      <field name="name">project_task_custom window</field>
-      <field name="res_model">project_task_custom.project_task_custom</field>
-      <field name="view_mode">tree,form</field>
-    </record>
+   <record model="ir.actions.act_window" id="project_task_custom.action_window">
+     <field name="name">project_task_custom window</field>
+     <field name="res_model">project_task_custom.project_task_custom</field>
+     <field name="view_mode">tree,form</field>
+   </record>
 -->
 
-    <!-- server action to the one above -->
+   <!-- server action to the one above -->
 <!--
-    <record model="ir.actions.server" id="project_task_custom.action_server">
-      <field name="name">project_task_custom server</field>
-      <field name="model_id" ref="model_project_task_custom_project_task_custom"/>
-      <field name="state">code</field>
-      <field name="code">
-        action = {
-          "type": "ir.actions.act_window",
-          "view_mode": "tree,form",
-          "res_model": model._name,
-        }
-      </field>
-    </record>
+   <record model="ir.actions.server" id="project_task_custom.action_server">
+     <field name="name">project_task_custom server</field>
+     <field name="model_id" ref="model_project_task_custom_project_task_custom"/>
+     <field name="state">code</field>
+     <field name="code">
+       action = {
+         "type": "ir.actions.act_window",
+         "view_mode": "tree,form",
+         "res_model": model._name,
+       }
+     </field>
+   </record>
 -->
 
-    <!-- Top menu item -->
+   <!-- Top menu item -->
 <!--
-    <menuitem name="project_task_custom" id="project_task_custom.menu_root"/>
+   <menuitem name="project_task_custom" id="project_task_custom.menu_root"/>
 -->
-    <!-- menu categories -->
+   <!-- menu categories -->
 <!--
-    <menuitem name="Menu 1" id="project_task_custom.menu_1" parent="project_task_custom.menu_root"/>
-    <menuitem name="Menu 2" id="project_task_custom.menu_2" parent="project_task_custom.menu_root"/>
+   <menuitem name="Menu 1" id="project_task_custom.menu_1" parent="project_task_custom.menu_root"/>
+   <menuitem name="Menu 2" id="project_task_custom.menu_2" parent="project_task_custom.menu_root"/>
 -->
-    <!-- actions -->
+   <!-- actions -->
 <!--
-    <menuitem name="List" id="project_task_custom.menu_1_list" parent="project_task_custom.menu_1"
-              action="project_task_custom.action_window"/>
-    <menuitem name="Server to list" id="project_task_custom" parent="project_task_custom.menu_2"
-              action="project_task_custom.action_server"/>
+   <menuitem name="List" id="project_task_custom.menu_1_list" parent="project_task_custom.menu_1"
+             action="project_task_custom.action_window"/>
+   <menuitem name="Server to list" id="project_task_custom" parent="project_task_custom.menu_2"
+             action="project_task_custom.action_server"/>
 -->
 
-    <record id="view_task_form_inherit" model="ir.ui.view">
-        <field name="name">project.task.form.inherit</field>
-        <field name="model">project.task</field>
-        <field name="inherit_id" ref="project.view_task_form2"/>
-                <!-- <field name="inherit_id" ref="hr_timesheet.view_task_form2_inherited"/> -->
-        <field name="arch" type="xml">
-        <!-- Add the field to the view but keep it invisible -->
-            <xpath expr="//field[@name='project_id']" position="after">
-                <field name="is_field_service_project" invisible="1"/>
-            </xpath>
-            <xpath expr="//field[@name='x_start_date']" position="after">
-                <!-- <field name="slot_sdate" widget="date" invisible="[('stage_id.name', '=', 'Cancelled'), ('project', '!=', 'Field Service')]"/> -->
-                <field name="slot_sdate" widget="date" decoration-danger="slot_sdate &lt; current_date and state not in ['1_done', '1_canceled']" invisible="not is_field_service_project"/>
-                <field name="slot_ids" widget="many2many_tags" placeholder="Select slots" invisible="not is_field_service_project"/>
-                <field name="slot_time_range" readonly="1" invisible="not is_field_service_project"/>
-                <field name="slot_edate" widget="date" invisible="1"/>
-                <field name="estimated_slots" readonly="1" invisible="1"/>
-            </xpath>
-        </field>
-    </record>
- 
+   <record id="view_task_form_inherit" model="ir.ui.view">
+       <field name="name">project.task.form.inherit</field>
+       <field name="model">project.task</field>
+       <field name="inherit_id" ref="project.view_task_form2"/>
+               <!-- <field name="inherit_id" ref="hr_timesheet.view_task_form2_inherited"/> -->
+       <field name="arch" type="xml">
+       <!-- Add the field to the view but keep it invisible -->
+           <xpath expr="//field[@name='project_id']" position="after">
+               <field name="is_field_service_project" invisible="1"/>
+           </xpath>
+           <xpath expr="//field[@name='x_start_date']" position="after">
+               <!-- <field name="slot_sdate" widget="date" invisible="[('stage_id.name', '=', 'Cancelled'), ('project', '!=', 'Field Service')]"/> -->
+               <field name="slot_sdate" widget="date" decoration-danger="slot_sdate &lt; current_date and state not in ['1_done', '1_canceled']" invisible="not is_field_service_project"/>
+               <field name="slot_ids" widget="many2many_tags" placeholder="Select slots" invisible="not is_field_service_project"/>
+               <field name="slot_time_range" readonly="1" invisible="not is_field_service_project"/>
+               <field name="slot_edate" widget="date" invisible="1"/>
+               <field name="estimated_slots" readonly="1" invisible="1"/>
+           </xpath>
+       </field>
+   </record>
 
-    <record id="view_task_kanban_with_slots" model="ir.ui.view">
-        <field name="name">project.task.kanban.inherit</field>
-        <field name="model">project.task</field>
-        <field name="inherit_id" ref="project.view_task_kanban"/>
-        <field name="arch" type="xml">
-            <!-- Add the field to the view but keep it invisible -->
-            <xpath expr="//field[@name='project_id']" position="after">
-                <field name="is_field_service_project" invisible="1"/>
-            </xpath>
-            <xpath expr="//div[@class='o_kanban_record_body']" position="inside">
-                <div>
-                        <span class="o_field_widget">
-                            <field name="slot_ids" widget="many2many_tags" string="Slot" invisible="not is_field_service_project"/>
-                            <div t-if="record.slot_sdate.raw_value" name="slot_sdate" invisible="state in ['1_done', '1_canceled'] or not is_field_service_project">
-                                        Sdate: <field name="slot_sdate" widget="remaining_days"/>
-                            </div>
-                            <!-- <field name="slot_sdate" widget="remaining_days"/> -->
-                        </span>
-                    </div>
-            </xpath>
-        </field>
-    </record>
+   <record id="view_task_kanban_with_slots" model="ir.ui.view">
+       <field name="name">project.task.kanban.inherit</field>
+       <field name="model">project.task</field>
+       <field name="inherit_id" ref="project.view_task_kanban"/>
+       <field name="arch" type="xml">
+           <!-- Add the field to the view but keep it invisible -->
+           <xpath expr="//field[@name='project_id']" position="after">
+               <field name="is_field_service_project" invisible="1"/>
+           </xpath>
+           <xpath expr="//div[@class='o_kanban_record_body']" position="inside">
+               <div>
+                       <span class="o_field_widget">
+                           <field name="slot_ids" widget="many2many_tags" string="Slot" invisible="not is_field_service_project"/>
+                           <div t-if="record.slot_sdate.raw_value" name="slot_sdate" invisible="state in ['1_done', '1_canceled'] or not is_field_service_project">
+                                       Sdate: <field name="slot_sdate" widget="remaining_days"/>
+                           </div>
+                           <!-- <field name="slot_sdate" widget="remaining_days"/> -->
+                       </span>
+                   </div>
+           </xpath>
+       </field>
+   </record>
 
-    <record id="project_form_inherit_field_service" model="ir.ui.view">
-        <field name="name">project.form.inherit.field.service</field>
-        <field name="model">project.project</field>
-        <field name="inherit_id" ref="project.edit_project"/>
-        <field name="arch" type="xml">
-            <xpath expr="//field[@name='description']" position="after">
-                <field name="is_field_service"/>
-            </xpath>
-        </field>
-    </record>
+   <record id="project_form_inherit_field_service" model="ir.ui.view">
+       <field name="name">project.form.inherit.field.service</field>
+       <field name="model">project.project</field>
+       <field name="inherit_id" ref="project.edit_project"/>
+       <field name="arch" type="xml">
+           <xpath expr="//field[@name='description']" position="after">
+               <field name="is_field_service"/>
+           </xpath>
+       </field>
+   </record>
 
- <!-- Server Action for Updating All Tasks -->
-    <record id="action_force_update_field_service_tasks" model="ir.actions.server">
-        <field name="name">Force Update Field Service Tasks</field>
-        <field name="model_id" ref="project.model_project_task"/>
-        <field name="state">code</field>
-        <field name="code">
-            env['project.task'].force_update_is_field_service_project()
-        </field>
-    </record>
+<!-- Server Action for Updating All Tasks -->
+   <record id="action_force_update_field_service_tasks" model="ir.actions.server">
+       <field name="name">Force Update Field Service Tasks</field>
+       <field name="model_id" ref="project.model_project_task"/>
+       <field name="state">code</field>
+       <field name="code">
+           env['project.task'].force_update_is_field_service_project()
+       </field>
+   </record>
 
-    <!-- Menu Item to Trigger Server Action (Optional) -->
-    <!-- <menuitem id="menu_force_update_field_service_tasks"
-              name="Force Update Field Service Tasks"
-              parent="project.menu_main_pm"
-              action="action_force_update_field_service_tasks"/> -->
-
-
-     <record id="view_task_form_inherit_v2" model="ir.ui.view">
-        <field name="name">project.task.form.inherit</field>
-        <field name="model">project.task</field>
-        <field name="inherit_id" ref="project.view_task_form2"/>
-        <field name="arch" type="xml">
-        <!-- Add the field to the view but keep it invisible -->
-            <xpath expr="//field[@name='project_id']" position="after">
-                <field name="is_field_service_project" invisible="1"/>
-            </xpath>
-            <!-- Add the phone number field next to the assignee field -->
-            <xpath expr="//field[@name='user_ids']" position="after">
-                <field name="assignee_phone" readonly="1" invisible="1"/>
-            </xpath>
-            <!-- Place Supporting Technicians field after the Assignee field -->
-            <xpath expr="//field[@name='user_ids']" position="after">
-                <field name="supporting_technicians_ids" widget="many2many_tags" 
-                    domain="[('id', 'not in', user_ids)]" 
-                    placeholder="Select supporting technicians" 
-                    invisible="not is_field_service_project"/>
-            </xpath>
-            <!-- Add Advance Amount Field -->
-        <xpath expr="//field[@name='tag_ids']" position="after">
-            <field name="advance_1" widget="monetary" default="0" help="Advance paid by the customer." invisible="not is_field_service_project"/>
-        </xpath>
-        
-        <!-- Add the cancellation_reason field after the date_deadline section -->
-        <xpath expr="//div[@id='date_deadline_and_recurring_task']" position="after">
-                <field name="cancellation_reason" placeholder="Select a cancellation reason" help="Reason for task rescheduling." invisible="not is_field_service_project or stage_id != 100"/>
-                <field name="reschedule_reason" placeholder="Select a reschedule reason" help="Reason for task rescheduling." invisible="not is_field_service_project"/>
-                
-        </xpath>
-
-        <!-- Add Reschedule Reason Field -->
-        <!-- <xpath expr="//field[@name='repeat_until']" position="after">
-            <field name="reschedule_reason" placeholder="Select a reschedule reason" help="Reason for task rescheduling." invisible="not is_field_service_project"/>
-        </xpath> -->
-        </field>
-    </record>
+   <!-- Menu Item to Trigger Server Action (Optional) -->
+   <!-- <menuitem id="menu_force_update_field_service_tasks"
+             name="Force Update Field Service Tasks"
+             parent="project.menu_main_pm"
+             action="action_force_update_field_service_tasks"/> -->
 
 
-    <!-- <record id="view_task_form_inherit_v3" model="ir.ui.view">
-        <field name="name">project.task.form.inherit.v3</field>
-        <field name="model">project.task</field>
-        <field name="inherit_id" ref="project.view_task_form2"/>
-        <field name="arch" type="xml">
-            Add the field to the view but keep it invisible
-            <xpath expr="//field[@name='project_id']" position="after">
-                <field name="is_field_service_project" invisible="1"/>
-            </xpath>
-            Place Supporting Technicians field after the Assignee field
-            <xpath expr="//field[@name='user_ids']" position="after">
-                <field name="supporting_technicians_ids" widget="many2many_tags" 
-                    domain="[('id', 'not in', user_ids)]" 
-                    placeholder="Select supporting technicians" 
-                    invisible="not is_field_service_project"/>
-            </xpath>
-        </field>
-    </record> -->
+    <record id="view_task_form_inherit_v2" model="ir.ui.view">
+       <field name="name">project.task.form.inherit</field>
+       <field name="model">project.task</field>
+       <field name="inherit_id" ref="project.view_task_form2"/>
+       <field name="arch" type="xml">
+       <!-- Add the field to the view but keep it invisible -->
+           <xpath expr="//field[@name='project_id']" position="after">
+               <field name="is_field_service_project" invisible="1"/>
+           </xpath>
+           <!-- Add the phone number field next to the assignee field -->
+           <xpath expr="//field[@name='user_ids']" position="after">
+               <field name="assignee_phone" readonly="1" invisible="1"/>
+           </xpath>
+           <!-- Place Supporting Technicians field after the Assignee field -->
+           <xpath expr="//field[@name='user_ids']" position="after">
+               <field name="supporting_technicians_ids" widget="many2many_tags"
+                   domain="[('id', 'not in', user_ids)]"
+                   placeholder="Select supporting technicians"
+                   invisible="not is_field_service_project"/>
+               <field name="x_start_date" invisible="1"/>
+           </xpath>
+           <!-- Add Advance Amount Field -->
+       <xpath expr="//field[@name='tag_ids']" position="after">
+           <field name="advance_1" widget="monetary" default="0" help="Advance paid by the customer." invisible="not is_field_service_project"/>
+       </xpath>
+      
+       <!-- Add the cancellation_reason field after the date_deadline section -->
+       <xpath expr="//div[@id='date_deadline_and_recurring_task']" position="after">
+               <field name="cancellation_reason" placeholder="Select a cancellation reason" help="Reason for task rescheduling." invisible="not is_field_service_project or stage_id != 100"/>
+               <field name="reschedule_reason" placeholder="Select a reschedule reason" help="Reason for task rescheduling." invisible="not is_field_service_project"/>
+              
+       </xpath>
+
+       <!-- Add Reschedule Reason Field -->
+       <!-- <xpath expr="//field[@name='repeat_until']" position="after">
+           <field name="reschedule_reason" placeholder="Select a reschedule reason" help="Reason for task rescheduling." invisible="not is_field_service_project"/>
+       </xpath> -->
+       </field>
+   </record>
+
+
+   <!-- <record id="view_task_form_inherit_v3" model="ir.ui.view">
+       <field name="name">project.task.form.inherit.v3</field>
+       <field name="model">project.task</field>
+       <field name="inherit_id" ref="project.view_task_form2"/>
+       <field name="arch" type="xml">
+           Add the field to the view but keep it invisible
+           <xpath expr="//field[@name='project_id']" position="after">
+               <field name="is_field_service_project" invisible="1"/>
+           </xpath>
+           Place Supporting Technicians field after the Assignee field
+           <xpath expr="//field[@name='user_ids']" position="after">
+               <field name="supporting_technicians_ids" widget="many2many_tags"
+                   domain="[('id', 'not in', user_ids)]"
+                   placeholder="Select supporting technicians"
+                   invisible="not is_field_service_project"/>
+           </xpath>
+       </field>
+   </record> -->
 
 
 
-  </data>
+ </data>
 </odoo>
+
 
 
 

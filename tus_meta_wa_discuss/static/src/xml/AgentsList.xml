@@ -7,9 +7,9 @@
     </t>
 <!--   NAME OF PARTNER IN CHATTER WINDOW HEADER-->
     <t t-name="tus_meta_wa_discuss.ChatWindow.headerContent" t-inherit="mail.ChatWindow.headerContent" t-inherit-mode="extension" owl="1">
-        <xpath expr="//div[@t-if='!state.editingName']" position="replace">
+        <xpath expr="//div[@t-if='!state.editingName and !isMobileFoldedForLivechatVisitor']" position="replace">
             <div t-if="thread.chatPartner" class="text-truncate fw-bold border border-transparent me-1 my-0" t-att-title="thread.chatPartner.name" t-esc="thread.chatPartner.name" t-att-class="thread ? 'ms-1' : 'ms-3'"/>
-            <div t-elif="!state.editingName" class="text-truncate fw-bold border border-transparent me-1 my-0" t-att-title="props.chatWindow.displayName" t-esc="props.chatWindow.displayName" t-att-class="thread ? 'ms-1' : 'ms-3'"/>
+            <div t-elif="!state.editingName and !isMobileFoldedForLivechatVisitor" class="text-truncate fw-bold border border-transparent me-1 my-0" t-att-title="props.chatWindow.displayName" t-esc="props.chatWindow.displayName" t-att-class="thread ? 'ms-1' : 'ms-3'"/>
         </xpath>
     </t>
 
