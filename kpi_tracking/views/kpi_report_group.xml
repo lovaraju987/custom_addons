@@ -24,21 +24,11 @@
                         <field name="description"/>
                         <field name="group_achievement_percent" readonly="1"/>
                         <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>
-                        <!-- <field name="score_color" invisible="1"/> -->
+                        <field name="score_color" invisible="1"/>
                     </group>
                     <notebook>
                         <page string="KPIs">
-                            <!-- <field name="kpi_ids">
-                                <tree editable="bottom">
-                                    <field name="name"/>
-                                    <field name="department"/>
-                                    <field name="kpi_type"/>
-                                    <field name="report_type"/>
-                                    <field name="value" readonly="1"/>
-                                    <field name="last_submitted"/>
-                                </tree>
-                            </field> -->
-                            <field name="kpi_ids" context="{'default_report_id': active_id}" mode="tree,form">
+                            <field name="kpi_ids" context="{'default_report_id': id}" mode="tree,form">
                                 <tree decoration-success="achievement_percent &gt; 100"
                                                     decoration-warning="achievement_percent &gt; 50 and achievement_percent &lt; 100"
                                                     decoration-danger="achievement_percent &lt; 50">
@@ -53,64 +43,21 @@
                                     <field name="target_unit_display" readonly="1"/>
                                     <field name="achievement_percent" widget="progressbar"/>
                                     <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>
-                                    <!-- <field name="score_color" invisible="1"/> -->
-
+                                    <field name="score_color" invisible="1"/>
                                 </tree>
                                 <form>
                                     <group>
                                         <field name="name"/>
-                                        <field name="assigned_user_ids" widget="many2many_tags" options="{'no_create': True}"/>
-                                        <field name="report_id" readonly="1"/>
                                         <field name="kpi_type"/>
-                                        <field name="report_type"/>
-                                        <field name="department"/>
-                                        <field name="priority_weight"/>
-                                        <field name="manual_value"
-                                                groups="kpi_tracking.group_kpi_admin,kpi_tracking.group_kpi_manager"
-                                                readonly="kpi_type != 'manual'"/>
-                                        <field name="target_type"/>
                                         <field name="target_value"/>
-                                        <field name="kpi_direction"/>
-                                        <field name="target_unit_display" readonly="1"/>
-                                        <field name="value" readonly="1"/>
-                                    </group>
-                                    <group string="Auto Tracking">
-                                        <!-- 1) First row: Source model selector -->
-                                        <group>
-                                            <field name="source_model_id"/>
-                                            <field name="source_model" invisible="1"/>
-                                        </group>
-
-                                        <!-- 2) Second row: Available fields spanning both columns -->
-                                        <group colspan="2">
-                                            <field name="available_fields"
-                                                   widget="html"
-                                                   options="{'sanitize': false}"
-                                                   readonly="1"
-                                                   nolabel="1"/>
-                                        </group>
-
-                                        <!-- 3) Third row: filter/configuration fields -->
-                                        <group>
-                                            <field name="filter_field"/>
-                                            <field name="filter_type"/>
-                                            <field name="source_domain"/>
-                                            <field name="formula_field"/>
-                                            <field name="count_a" readonly="1"/>
-                                            <field name="count_b" readonly="1"/>
-                                            <field name="formula_notes"/>
-                                            <field name="domain_test_result" readonly="1"/>
-                                            <button name="action_test_domain"
-                                                    string="Test Domain"
-                                                    type="object"
-                                                    class="btn btn-primary"/>
-                                        </group>
+                                        <field name="value"/>
+                                        <field name="achievement_percent"/>
                                     </group>
                                 </form>
                             </field>
                         </page>
                         <page string="All Submissions">
-                            <field name="submission_ids" context="{'default_report_id': active_id}">
+                            <field name="submission_ids" context="{'default_report_id': id}">
                                 <tree>
                                     <field name="date" string="Submitted On"/>                
                                     <field name="report_id"/>
@@ -122,18 +69,18 @@
                                     <field name="target_unit_display" readonly="1"/>
                                     <field name="achievement_percent" widget="progressbar"/> 
                                     <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>  
-                                    <!-- <field name="score_color" invisible="1"/>                    -->
+                                    <field name="score_color" invisible="1"/>
                                     <field name="note"/>
                                 </tree>
                             </field>
                         </page>
                         <page string="Group Submission History">
-                            <field name="group_submission_ids" context="{'default_report_id': active_id}">
+                            <field name="group_submission_ids" context="{'default_report_id': id}">
                                 <tree>
                                     <field name="date" string="Submitted At"/>
                                     <field name="value"/>
                                     <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>
-                                    <!-- <field name="score_color" invisible="1"/> -->
+                                    <field name="score_color" invisible="1"/>
                                     <field name="user_id"/>
                                     <field name="note"/>
                                 </tree>
