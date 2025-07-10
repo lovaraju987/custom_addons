@@ -29,7 +29,7 @@
     <field name="groups" eval="[(4, ref('kpi_tracking.group_kpi_manager'))]"/>
     <field name="domain_force">
       ['|', '|', '|', '|',
-        ('department', '=', user.employee_id.department_id.name),
+        ('department', '=', user.employee_id.department_id.name.lower() if user.employee_id and user.employee_id.department_id else False),
         ('report_id.assigned_employee_ids.user_id', '=', user.id),
         ('create_uid', '=', user.id),
         ('assigned_user_ids', 'in', [user.id]),

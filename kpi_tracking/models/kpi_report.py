@@ -10,8 +10,6 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-_logger = logging.getLogger(__name__)
-
 # Constants for model names
 KPI_REPORT_SUBMISSION_MODEL = 'kpi.report.submission'
 KPI_REPORT_GROUP_MODEL = 'kpi.report.group'
@@ -277,125 +275,148 @@ class KPIReport(models.Model):
 
     @api.model
     def scheduled_update_kpis(self):
+        """Auto update KPI values - with enhanced error handling"""
         today = fields.Date.today()
-
+        
+        # Add error tracking
+        errors = []
+        success_count = 0
+        
         for rec in self.search([('kpi_type', '=', 'auto')]):
-            model = self.env[rec.source_model]
-            assigned_users = rec.assigned_user_ids or self.env.user
+            try:
+                if not rec.source_model_id or not rec.source_model:
+                    _logger.warning(f"KPI {rec.name} (ID: {rec.id}) has no source model configured")
+                    continue
+                    
+                model = self.env[rec.source_model]
+                assigned_users = rec.assigned_user_ids or self.env.user
 
-            for assigned_user in assigned_users:
-                try:
-                    domain_base = []
-                    start_date, end_date = None, None
+                for assigned_user in assigned_users:
+                    try:
+                        # Enhanced domain validation
+                        domain_base = []
+                        start_date, end_date = None, None
 
-                    if rec.filter_type == 'today':
-                        start_date = datetime.combine(today, time.min)
-                        end_date = datetime.combine(today, time.max)
-                    elif rec.filter_type == 'this_week':
-                        start_date = datetime.combine(today - timedelta(days=today.weekday()), time.min)
-                        end_date = datetime.combine(today, time.max)
-                    elif rec.filter_type == 'this_month':
-                        start_date = datetime.combine(today.replace(day=1), time.min)
-                        end_date = datetime.combine(today, time.max)
+                        if rec.filter_type == 'today':
+                            start_date = datetime.combine(today, time.min)
+                            end_date = datetime.combine(today, time.max)
+                        elif rec.filter_type == 'this_week':
+                            start_date = datetime.combine(today - timedelta(days=today.weekday()), time.min)
+                            end_date = datetime.combine(today, time.max)
+                        elif rec.filter_type == 'this_month':
+                            start_date = datetime.combine(today.replace(day=1), time.min)
+                            end_date = datetime.combine(today, time.max)
 
-                    if rec.filter_field and start_date and end_date:
-                        domain_base += [
-                            (rec.filter_field, '>=', start_date),
-                            (rec.filter_field, '<=', end_date)
-                        ]
+                        if rec.filter_field and start_date and end_date:
+                            domain_base += [
+                                (rec.filter_field, '>=', start_date),
+                                (rec.filter_field, '<=', end_date)
+                            ]
 
-                    local_vars = {
-                        'uid': assigned_user.id,
-                        'user': assigned_user,
-                        'assigned_user': assigned_user,
-                        'today': today,
-                    }
+                        # Safe domain evaluation
+                        domain = []
+                        if rec.source_domain:
+                            try:
+                                local_vars = {
+                                    'uid': assigned_user.id,
+                                    'user': assigned_user,
+                                    'assigned_user': assigned_user,
+                                    'today': today,
+                                    'yesterday': today - timedelta(days=1),
+                                    'datetime': fields.Datetime,
+                                }
+                                domain = eval(rec.source_domain, {}, local_vars)
+                                if not isinstance(domain, list):
+                                    raise ValueError("Domain must be a list")
+                            except Exception as e:
+                                _logger.error(f"Error evaluating domain for KPI {rec.name}: {e}")
+                                domain = []
 
-                    domain_filtered = domain_base[:]
-                    if rec.source_domain:
-                        domain_filtered += eval(rec.source_domain, {}, local_vars)
-
-                    count_a = model.search_count(domain_base)
-                    count_b = model.search_count(domain_filtered)
-                    records = model.search(domain_filtered)
-
-                    rec.count_a = count_a
-                    rec.count_b = count_b
-
-                    value = 0.0
-                    if rec.formula_field:
-                        formula = rec.formula_field.strip() \
-                            .replace('\u202c', '') \
-                            .replace('\n', '') \
-                            .replace('\r', '') \
-                            .replace('\t', '') \
-                            .replace("“", "\"") \
-                            .replace("”", "\"")
-
-                        local_vars.update({
-                            'count_a': count_a or 1,
-                            'count_b': count_b,
-                            'records': records,
-                        })
-                        safe_globals = {"__builtins__": __builtins__}
+                        domain += domain_base
+                        
+                        # Safe model access
                         try:
-                            value = eval(formula, safe_globals, local_vars)
-                            rec.formula_notes = f"Formula evaluated for {assigned_user.name}"
+                            records = model.search(domain)
+                            count_a = len(records)
                         except Exception as e:
-                            rec.formula_notes = f"Error evaluating for {assigned_user.name}: {e}"
+                            _logger.error(f"Error searching records for KPI {rec.name}: {e}")
+                            continue
 
-                    rec.value = value
-                    rec.last_submitted = fields.Datetime.now()
+                        count_b = 0
+                        if rec.count_field:
+                            try:
+                                count_b = len(records.filtered(lambda r: getattr(r, rec.count_field, False)))
+                            except AttributeError:
+                                _logger.warning(f"Count field '{rec.count_field}' not found in model {rec.source_model}")
 
-                    existing = self.env[KPI_REPORT_SUBMISSION_MODEL].sudo().search([
-                        ('kpi_id', '=', rec.id),
-                        ('user_id', '=', assigned_user.id),
-                        ('date', '>=', datetime.combine(today, datetime.min.time())),
-                        ('date', '<', datetime.combine(today + timedelta(days=1), datetime.min.time())),
-                    ], limit=1)
+                        # Safe formula evaluation
+                        final_value = 0.0
+                        if rec.formula_field:
+                            try:
+                                local_vars = {
+                                    'count_a': count_a,
+                                    'count_b': count_b,
+                                    'records': records,
+                                    'assigned_user': assigned_user,
+                                    'today': today,
+                                    'sum': sum,
+                                    'len': len,
+                                    'max': max,
+                                    'min': min,
+                                    'abs': abs,
+                                }
+                                final_value = eval(rec.formula_field, {"__builtins__": {}}, local_vars)
+                                if not isinstance(final_value, (int, float)):
+                                    final_value = float(final_value)
+                            except Exception as e:
+                                _logger.error(f"Error evaluating formula for KPI {rec.name}: {e}")
+                                final_value = 0.0
 
-                    vals = {
-                        'kpi_id': rec.id,
-                        'user_id': assigned_user.id,
-                        'value': value,
-                        'note': rec.note,
-                        'date': fields.Datetime.now(),
-                        'score_label': rec.score_label,
-                        'score_color': rec.score_color,
-                    }
+                        # Update KPI values safely
+                        try:
+                            rec.sudo().write({
+                                'count_a': count_a,
+                                'count_b': count_b,
+                                'value': final_value,
+                                'last_submitted': today
+                            })
+                            success_count += 1
+                        except Exception as e:
+                            _logger.error(f"Error updating KPI {rec.name}: {e}")
+                            errors.append(f"KPI {rec.name}: {str(e)}")
+                            continue
 
-                    if existing:
-                        existing.sudo().write(vals)
-                    else:
-                        self.env[KPI_REPORT_SUBMISSION_MODEL].sudo().create(vals)
+                        # Create submission record safely
+                        try:
+                            submission_vals = {
+                                'kpi_id': rec.id,
+                                'user_id': assigned_user.id,
+                                'value': final_value,
+                                'date': fields.Datetime.now(),
+                                'note': f'Auto-updated on {today}'
+                            }
+                            self.env[KPI_REPORT_SUBMISSION_MODEL].sudo().create(submission_vals)
+                        except Exception as e:
+                            _logger.error(f"Error creating submission for KPI {rec.name}: {e}")
 
-                except Exception as e:
-                    rec.formula_notes = f"Error calculating for {assigned_user.name}: {e}"
-
-        # === Append Group KPI Submission after all individual KPI updates ===
-        group_model = self.env[KPI_REPORT_GROUP_MODEL]
-        group_submission_model = self.env[KPI_REPORT_GROUP_SUBMISSION_MODEL]
-        for group in group_model.search([]):
-            vals = {
-                'report_id': group.id,
-                'value': group.group_achievement_percent,
-                'user_id': self.env.uid,
-                'note': 'Auto submission after KPI update',
-                'date': fields.Datetime.now(),
-                'score_label': group.score_label,
-                'score_color': group.score_color,
-            }
-
-            existing = group_submission_model.search([
-                ('report_id', '=', group.id),
-                ('date', '>=', datetime.combine(today, datetime.min.time())),
-                ('date', '<', datetime.combine(today + timedelta(days=1), datetime.min.time())),
-            ], limit=1)
-
-            if existing:
-                existing.sudo().write(vals)
-            else:
-                group_submission_model.sudo().create(vals)
+                    except Exception as e:
+                        _logger.error(f"Error processing user {assigned_user.name} for KPI {rec.name}: {e}")
+                        errors.append(f"KPI {rec.name} - User {assigned_user.name}: {str(e)}")
+                        
+            except Exception as e:
+                _logger.error(f"Error processing KPI {rec.name}: {e}")
+                errors.append(f"KPI {rec.name}: {str(e)}")
+        
+        # Log summary
+        _logger.info(f"KPI auto-update completed: {success_count} successful, {len(errors)} errors")
+        if errors:
+            _logger.warning(f"KPI update errors: {'; '.join(errors[:5])}{'...' if len(errors) > 5 else ''}")
+        
+        return {
+            'success_count': success_count,
+            'error_count': len(errors),
+            'errors': errors[:10]  # Limit error list
+        }
 
     @api.constrains('source_domain', 'formula_field', 'source_model')
     def _check_domain_and_formula(self):

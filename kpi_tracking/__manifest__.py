@@ -1,6 +1,6 @@
 {
     "name": "KPI Tracking & Performance Management",
-    "version": "17.1.1",
+    "version": "17.1.2",
     "summary": "Advanced KPI tracking with automated calculations, reporting, and performance analytics",
     "description": """
 KPI Tracking & Performance Management System
@@ -94,7 +94,7 @@ Ready to track performance!
         "data/migration_actions.xml"
     ],
     "demo": [
-        "demo/demo_data.xml",
+        "demo/demo_data_fixed.xml",
     ],
     "images": [
         "static/description/banner.png",
