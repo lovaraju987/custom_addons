@@ -6,6 +6,11 @@ from dateutil.relativedelta import relativedelta
 from odoo.exceptions import ValidationError, UserError
 from collections import namedtuple
 from types import SimpleNamespace
+import logging
+
+_logger = logging.getLogger(__name__)
+
+_logger = logging.getLogger(__name__)
 
 # Constants for model names
 KPI_REPORT_SUBMISSION_MODEL = 'kpi.report.submission'
@@ -161,6 +166,23 @@ class KPIReport(models.Model):
     source_domain = fields.Text(string="Source Domain", help="Domain filter for records")
     domain_test_result = fields.Char(readonly=True)
     formula_notes = fields.Text()
+    
+    # Migration helper field
+    needs_filter_field_migration = fields.Boolean(
+        string="Needs Filter Field Migration",
+        compute="_compute_needs_migration",
+        help="Indicates if this KPI needs filter field data migration"
+    )
+
+    @api.depends('filter_field', 'filter_field_id', 'source_model_id')
+    def _compute_needs_migration(self):
+        """Check if KPI needs filter field migration"""
+        for record in self:
+            record.needs_filter_field_migration = (
+                bool(record.filter_field) and 
+                not record.filter_field_id and 
+                bool(record.source_model_id)
+            )
 
     @api.onchange('source_model_id')
     def _onchange_source_model_id(self):
@@ -487,3 +509,99 @@ class KPIReport(models.Model):
                 ratio = (self.target_value / self.value * 100) if self.value else 0.0
                 return min(ratio, 100.0)
         return 0.0
+
+    @api.model
+    def migrate_filter_field_data(self):
+        """
+        Migrate existing filter_field string data to filter_field_id Many2one field.
+        This method can be called manually to fix data after module upgrade.
+        """
+        # Find KPIs with filter_field data but no filter_field_id
+        kpis_to_migrate = self.search([
+            ('filter_field', '!=', False),
+            ('filter_field_id', '=', False),
+            ('source_model_id', '!=', False)
+        ])
+        
+        migrated_count = 0
+        failed_count = 0
+        
+        for kpi in kpis_to_migrate:
+            try:
+                # Find the corresponding ir.model.fields record
+                field = self.env['ir.model.fields'].search([
+                    ('model_id', '=', kpi.source_model_id.id),
+                    ('name', '=', kpi.filter_field)
+                ], limit=1)
+                
+                if field:
+                    kpi.sudo().write({'filter_field_id': field.id})
+                    migrated_count += 1
+                    _logger.info(f"Migrated KPI {kpi.name}: filter_field '{kpi.filter_field}' -> filter_field_id {field.id}")
+                else:
+                    failed_count += 1
+                    _logger.warning(f"Could not find field '{kpi.filter_field}' for KPI {kpi.name} (model: {kpi.source_model_id.model})")
+                    
+            except Exception as e:
+                failed_count += 1
+                _logger.error(f"Error migrating KPI {kpi.name}: {str(e)}")
+        
+        return {
+            'migrated': migrated_count,
+            'failed': failed_count,
+            'message': f"Migration completed: {migrated_count} KPIs migrated, {failed_count} failed"
+        }
+
+    def action_migrate_filter_fields(self):
+        """Action to trigger filter field migration"""
+        self.ensure_one()
+        if not self.env.user.has_group('kpi_tracking.group_kpi_admin'):
+            raise UserError("Only KPI Administrators can perform data migration.")
+        
+        result = self.migrate_filter_field_data()
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Migration Completed',
+                'message': result['message'],
+                'type': 'success' if result['failed'] == 0 else 'warning',
+                'sticky': False,
+            }
+        }
+
+    @api.model
+    def default_get(self, fields_list):
+        """Override to auto-fix filter field data if needed"""
+        result = super().default_get(fields_list)
+        return result
+
+    @api.model
+    def create(self, vals):
+        """Override create to handle filter field migration if needed"""
+        record = super().create(vals)
+        record._try_fix_filter_field()
+        return record
+
+    def write(self, vals):
+        """Override write to handle filter field migration if needed"""
+        result = super().write(vals)
+        if 'source_model_id' in vals or 'filter_field' in vals:
+            for record in self:
+                record._try_fix_filter_field()
+        return result
+
+    def _try_fix_filter_field(self):
+        """
+        Automatically try to fix filter_field_id if it's empty but filter_field has value
+        """
+        if self.filter_field and not self.filter_field_id and self.source_model_id:
+            field = self.env['ir.model.fields'].search([
+                ('model_id', '=', self.source_model_id.id),
+                ('name', '=', self.filter_field)
+            ], limit=1)
+            
+            if field:
+                self.sudo().write({'filter_field_id': field.id})
+                _logger.info(f"Auto-fixed filter_field_id for KPI {self.name}")

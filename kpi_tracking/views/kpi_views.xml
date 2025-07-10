@@ -16,6 +16,8 @@
                 <field name="achievement_percent" widget="progressbar"/>
                 <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>
                 <field name="score_color" invisible="1"/>
+                <field name="needs_filter_field_migration" widget="badge" 
+                       decoration-warning="needs_filter_field_migration" string="Migration Needed"/>
             </tree>
         </field>
     </record>
@@ -25,8 +27,15 @@
         <field name="model">kpi.report</field>
         <field name="arch" type="xml">
             <form>
+                <header>
+                    <div class="alert alert-warning" role="alert" invisible="not needs_filter_field_migration">
+                        <strong>Data Migration Required:</strong> This KPI has filter field data that needs to be migrated to the new format. 
+                        Click "Fix Filter Field Data" below to resolve this.
+                    </div>
+                </header>
                 <sheet>
                     <!-- All fields now editable for KPI creation/editing -->
+                    <field name="needs_filter_field_migration" invisible="1"/>
 
                     <group>
                         <field name="name"/>
@@ -78,6 +87,13 @@
                                 type="object"
                                 class="btn btn-success"
                                 invisible="kpi_type != 'manual'"/>
+                        <button name="action_migrate_filter_fields"
+                                string="Fix Filter Field Data"
+                                type="object"
+                                class="btn btn-warning"
+                                groups="kpi_tracking.group_kpi_admin"
+                                help="Migrate old filter field data to new format"
+                                invisible="not needs_filter_field_migration"/>
                     </group>
 
                     <notebook>
