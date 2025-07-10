@@ -1,0 +1,182 @@
+<odoo>
+    <!-- Tree View -->
+    <record id="view_kpi_report_tree" model="ir.ui.view">
+        <field name="name">kpi.report.tree</field>
+        <field name="model">kpi.report</field>
+        <field name="arch" type="xml">
+            <tree>
+                <!-- <field name="name"/>
+                <field name="report_id"/>
+                <field name="kpi_type"/>
+                <field name="report_type"/>
+                <field name="value"/>
+                <field name="last_submitted"/> -->
+                <field name="name"/>
+                <field name="last_submitted"/>
+                <field name="department"/>
+                <field name="kpi_type"/>
+                <field name="report_type"/>
+                <field name="priority_weight"/>
+                <field name="value" readonly="1"/>
+                <field name="target_unit_display" readonly="1"/>
+                <field name="achievement_percent" widget="progressbar"/>
+                <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>
+                <!-- <field name="score_color" invisible="1"/> -->
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_kpi_report_form" model="ir.ui.view">
+        <field name="name">kpi.report.form</field>
+        <field name="model">kpi.report</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <!-- Required for modifiers -->
+                    <field name="is_admin" invisible="1"/>
+
+                    <group>
+                        <field name="name" readonly="not is_admin"/>
+                        <field name="assigned_user_ids" widget="many2many_tags"
+                            options="{'no_create': True}"
+                            readonly="not is_admin"/>
+                        <field name="report_id" readonly="not is_admin"/>
+                        <field name="kpi_type" readonly="not is_admin"/>
+                        <field name="report_type" readonly="not is_admin"/>
+                        <field name="department" readonly="not is_admin"/>
+                        <field name="priority_weight" readonly="not is_admin"/>
+                        <field name="manual_value"
+                                    groups="kpi_tracking.group_kpi_admin,kpi_tracking.group_kpi_manager"
+                                    readonly="kpi_type != 'manual'"/>
+                        <field name="target_type" readonly="not is_admin"/>
+                        <field name="target_value" readonly="not is_admin"/>
+                        <field name="kpi_direction" readonly="not is_admin"/>
+                        <field name="target_unit_display" readonly="1"/>
+                        <field name="achievement_percent" widget="progressbar"/>
+                        <field name="value" readonly="1"/>
+                        <field name="last_submitted" readonly="1"/>
+                    </group>
+
+                    <group string="Auto Tracking Configuration"
+                        invisible="kpi_type != 'auto' or not is_admin">
+                        <!-- 1) First row: Source model selector -->
+                        <group>
+                            <field name="source_model_id"/>
+                            <field name="source_model" invisible="1"/>
+                        </group>
+
+                        <!-- 2) Second row: Available fields spanning both columns -->
+                        <group colspan="2">
+                            <field name="available_fields"
+                                   widget="html"
+                                   options="{'sanitize': false}"
+                                   readonly="1"
+                                   nolabel="1"/>
+                        </group>
+
+                        <!-- 3) Third row: filter/configuration fields -->
+                        <group>
+                            <field name="filter_field"/>
+                            <field name="filter_type"/>
+                            <field name="count_field"/>
+                            <field name="source_domain"/>
+                            <field name="formula_field"/>
+                            <field name="count_a" readonly="1"/>
+                            <field name="count_b" readonly="1"/>
+                            <field name="domain_test_result" readonly="1"/>
+                            <button name="action_test_domain"
+                                    string="Test Domain"
+                                    type="object"
+                                    class="btn btn-primary"
+                                    invisible="not is_admin"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name="formula_notes" readonly="1"/>
+                        <button name="action_manual_refresh_kpi"
+                                string="Submit Manual KPI"
+                                type="object"
+                                class="btn btn-success"
+                                invisible="kpi_type != 'manual'"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Submission History">
+                            <field name="submission_ids" context="{'default_kpi_id': active_id}">
+                                <tree>
+                                    <field name="date" string="Submitted On"/>
+                                    <field name="report_id"/>
+                                    <field name="kpi_id"/>
+                                    <field name="user_id"/>
+                                    <field name="kpi_type"/>
+                                    <field name="report_type"/>
+                                    <field name="department"/>
+                                    <field name="priority_weight"/>
+                                    <field name="kpi_direction"/>
+                                    <field name="value"/>
+                                    <field name="target_unit_display" readonly="1"/>
+                                    <field name="achievement_percent" widget="progressbar"/>
+                                    <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>
+                                    <!-- <field name="score_color" invisible="1"/> -->
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- KPI Report Search View -->
+    <record id="view_kpi_report_search" model="ir.ui.view">
+        <field name="name">kpi.report.search</field>
+        <field name="model">kpi.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="department"/>
+                <field name="report_id"/>
+                <filter name="filter_manual" string="Manual KPIs" domain="[('kpi_type','=','manual')]"/>
+                <group expand="1" string="Group By">
+                    <filter name="group_by_department" string="Department" context="{'group_by': 'department'}"/>
+                    <filter name="group_by_report" string="Report" context="{'group_by': 'report_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- KPI Report Action -->
+    <record id="action_kpi_report" model="ir.actions.act_window">
+        <field name="name">KPI Reports</field>
+        <field name="res_model">kpi.report</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_kpi_report_search"/>
+    </record>
+
+    <!-- KPI Dashboard Action -->
+    <record id="action_kpi_dashboard" model="ir.actions.act_window">
+        <field name="name">KPI Dashboard</field>
+        <field name="res_model">kpi.report</field>
+        <field name="view_mode">tree,graph,pivot</field>
+        <field name="search_view_id" ref="view_kpi_report_search"/>
+    </record>
+
+    <!-- KPI Report Form Menu -->
+    <menuitem id="menu_kpi_root" name="KPI Dashboard" sequence="10"/>
+    <menuitem id="menu_kpi_dashboard" name="Dashboard Overview" parent="menu_kpi_root" action="action_kpi_dashboard" sequence="20"/>
+    <menuitem id="menu_kpi_report_list" name="Reports" parent="menu_kpi_root" action="action_kpi_report" sequence="30"/>
+
+    <!-- CRON: Auto Refresh KPIs -->
+    <record id="ir_cron_kpi_auto_refresh" model="ir.cron">
+        <field name="name">Auto Refresh KPI Reports</field>
+        <field name="model_id" ref="model_kpi_report"/>
+        <field name="state">code</field>
+        <field name="code">model.scheduled_update_kpis()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="active">True</field>
+    </record>
+</odoo>
