@@ -1,10 +1,7 @@
 <odoo>    
-    <record id="view_kpi_report_group_form" model="ir.ui.view">
-        <field n                                            <page string="Group Submission History">
-                            <field name="group_submission_ids" context="{'default_report_id': id}">
-                                <list> <page string="All Submissions">
-                            <field name="submission_ids" context="{'default_report_id': id}">
-                                <list>="name">kpi.report.group.form</field>
+    <!-- This is a backup copy of the KPI report group view -->
+    <record id="view_kpi_report_group_form_backup" model="ir.ui.view">
+        <field name="name">kpi.report.group.form.backup</field>
         <field name="model">kpi.report.group</field>
         <field name="arch" type="xml">
             <form>
@@ -28,22 +25,12 @@
                         <field name="description"/>
                         <field name="group_achievement_percent" readonly="1"/>
                         <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>
-                        <!-- <field name="score_color" invisible="1"/> -->
+                        <field name="score_color" invisible="1"/>
                     </group>
                     <notebook>
                         <page string="KPIs">
-                            <!-- <field name="kpi_ids">
-                                <list editable="bottom">
-                                    <field name="name"/>
-                                    <field name="department"/>
-                                    <field name="kpi_type"/>
-                                    <field name="report_type"/>
-                                    <field name="value" readonly="1"/>
-                                    <field name="last_submitted"/>
-                                </list>
-                            </field> -->
-                            <field name="kpi_ids" context="{'default_report_id': id}" mode="list,form">
-                                <list decoration-success="achievement_percent &gt; 100"
+                            <field name="kpi_ids" context="{'default_report_id': id}" mode="tree,form">
+                                <tree decoration-success="achievement_percent &gt; 100"
                                                     decoration-warning="achievement_percent &gt; 50 and achievement_percent &lt; 100"
                                                     decoration-danger="achievement_percent &lt; 50">
                                     <field name="name"/>
@@ -57,45 +44,22 @@
                                     <field name="target_unit_display" readonly="1"/>
                                     <field name="achievement_percent" widget="progressbar"/>
                                     <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>
-                                    <!-- <field name="score_color" invisible="1"/> -->
-
-                                </list>
+                                    <field name="score_color" invisible="1"/>
+                                </tree>
                                 <form>
                                     <group>
                                         <field name="name"/>
-                                        <field name="assigned_user_ids" widget="many2many_tags" options="{'no_create': True}"/>
-                                        <field name="report_id" readonly="1"/>
                                         <field name="kpi_type"/>
-                                        <field name="report_type"/>
-                                        <field name="department"/>
-                                        <field name="priority_weight"/>
-                                        <field name="manual_value"
-                                                groups="kpi_tracking.group_kpi_admin,kpi_tracking.group_kpi_manager"
-                                                readonly="kpi_type != 'manual'"/>
-                                        <field name="target_type"/>
                                         <field name="target_value"/>
-                                        <field name="kpi_direction"/>
-                                        <field name="target_unit_display" readonly="1"/>
-                                        <field name="value" readonly="1"/>
-                                    </group>
-                                    <group string="Auto Tracking">
-                                        <field name="source_model_id"/>
-                                        <field name="filter_field"/>
-                                        <field name="filter_type"/>
-                                        <field name="source_domain"/>
-                                        <field name="formula_field"/>
-                                        <field name="count_a" readonly="1"/>
-                                        <field name="count_b" readonly="1"/>
-                                        <field name="formula_notes"/>
-                                        <field name="domain_test_result" readonly="1"/>
-                                        <button name="action_test_domain" string="Test Domain" type="object" class="btn btn-primary"/>
+                                        <field name="value"/>
+                                        <field name="achievement_percent"/>
                                     </group>
                                 </form>
                             </field>
                         </page>
                         <page string="All Submissions">
                             <field name="submission_ids" context="{'default_report_id': id}">
-                                <list>
+                                <tree>
                                     <field name="date" string="Submitted On"/>                
                                     <field name="report_id"/>
                                     <field name="kpi_id"/>
@@ -106,21 +70,21 @@
                                     <field name="target_unit_display" readonly="1"/>
                                     <field name="achievement_percent" widget="progressbar"/> 
                                     <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>  
-                                    <!-- <field name="score_color" invisible="1"/>                    -->
+                                    <field name="score_color" invisible="1"/>
                                     <field name="note"/>
-                                </list>
+                                </tree>
                             </field>
                         </page>
                         <page string="Group Submission History">
                             <field name="group_submission_ids" context="{'default_report_id': id}">
-                                <list>
+                                <tree>
                                     <field name="date" string="Submitted At"/>
                                     <field name="value"/>
                                     <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>
-                                    <!-- <field name="score_color" invisible="1"/> -->
+                                    <field name="score_color" invisible="1"/>
                                     <field name="user_id"/>
                                     <field name="note"/>
-                                </list>
+                                </tree>
                             </field>
                         </page>
                     </notebook>
@@ -129,15 +93,10 @@
         </field>
     </record>
 
-    <record id="action_kpi_report_group" model="ir.actions.act_window">
-        <field name="name">Report Groups</field>
+    <!-- Backup action - not used in production -->
+    <record id="action_kpi_report_group_backup" model="ir.actions.act_window">
+        <field name="name">Report Groups (Backup)</field>
         <field name="res_model">kpi.report.group</field>
-        <field name="view_mode">list,form,graph,pivot</field>
+        <field name="view_mode">tree,form,graph,pivot</field>
     </record>
-
-    <menuitem id="menu_kpi_group_list"
-              name="Report Groups"
-              parent="menu_kpi_root"
-              action="action_kpi_report_group"
-              sequence="40"/>
 </odoo>

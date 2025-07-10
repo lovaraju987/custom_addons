@@ -15,7 +15,7 @@ import sys
 import json
 import xml.etree.ElementTree as ET
 
-MODULE_PATH = "c:\\odoo18_custom_addons\\kpi_tracking"
+MODULE_PATH = "/lib/python3/dist-packages/odoo/custom_addons/kpi_tracking"
 
 def validate_manifest():
     """Validate the __manifest__.py file"""

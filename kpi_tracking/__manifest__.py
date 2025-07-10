@@ -1,6 +1,6 @@
 {
     "name": "KPI Tracking & Performance Management",
-    "version": "18.1.0",
+    "version": "17.1.0",
     "summary": "Advanced KPI tracking with automated calculations, reporting, and performance analytics",
     "description": """
 KPI Tracking & Performance Management System
@@ -63,7 +63,7 @@ A comprehensive performance management solution for tracking, monitoring, and ev
 • Pro tips for performance optimization
 • Common pitfalls and how to avoid them
 
-Compatible with Odoo 18 Community and Enterprise editions.
+Compatible with Odoo 17 Community and Enterprise editions.
 
 🚀 GET STARTED IN 5 MINUTES:
 1. Install module (1 min)
