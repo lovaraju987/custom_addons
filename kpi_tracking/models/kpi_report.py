@@ -372,8 +372,9 @@ class KPIReport(models.Model):
                             _logger.error(f"Error searching records for count_a in KPI {rec.name}: {e}")
                             continue
 
-                        # Calculate count_b using time filter + domain filter
+                        # Calculate count_b and get filtered records for formula
                         count_b = 0
+                        filtered_records = model.browse([])  # Default empty recordset
                         domain_with_filter = domain_base[:]
                         
                         if rec.source_domain:
@@ -396,40 +397,74 @@ class KPIReport(models.Model):
                         try:
                             if rec.count_field:
                                 # For boolean count_field, filter records by the field
-                                records_b = model.search(domain_with_filter)
-                                count_b = len(records_b.filtered(lambda r: getattr(r, rec.count_field, False)))
+                                all_filtered = model.search(domain_with_filter)
+                                count_b = len(all_filtered.filtered(lambda r: getattr(r, rec.count_field, False)))
+                                filtered_records = all_filtered  # Use all filtered records for formula
                             else:
                                 # For conversion rates, count_b is records matching time + domain filters
-                                records_b = model.search(domain_with_filter)
-                                count_b = len(records_b)
+                                filtered_records = model.search(domain_with_filter)
+                                count_b = len(filtered_records)
                         except Exception as e:
                             _logger.error(f"Error calculating count_b for KPI {rec.name}: {e}")
                             count_b = 0
+                            filtered_records = model.browse([])
 
                         # Safe formula evaluation
                         final_value = 0.0
                         if rec.formula_field:
                             try:
-                                # Get records for formula evaluation (use time + domain for more context)
-                                formula_records = records_b if 'records_b' in locals() else records_a
+                                # Create safe globals with necessary built-ins
+                                safe_globals = {
+                                    "__builtins__": {
+                                        'len': len,
+                                        'sum': sum,
+                                        'max': max,
+                                        'min': min,
+                                        'abs': abs,
+                                        'round': round,
+                                        'int': int,
+                                        'float': float,
+                                        'str': str,
+                                        'bool': bool,
+                                        'list': list,
+                                        'dict': dict,
+                                        'range': range,
+                                        'enumerate': enumerate,
+                                        'sorted': sorted,
+                                        'reversed': reversed,
+                                        'any': any,
+                                        'all': all,
+                                    }
+                                }
                                 
                                 local_vars = {
                                     'count_a': count_a,
                                     'count_b': count_b,
-                                    'records': formula_records,
+                                    'records': filtered_records,  # Use the properly filtered records
                                     'assigned_user': assigned_user,
                                     'today': today,
-                                    'sum': sum,
-                                    'len': len,
-                                    'max': max,
-                                    'min': min,
-                                    'abs': abs,
                                 }
-                                final_value = eval(rec.formula_field, {"__builtins__": {}}, local_vars)
+                                final_value = eval(rec.formula_field, safe_globals, local_vars)
                                 if not isinstance(final_value, (int, float)):
                                     final_value = float(final_value)
+                                
+                                # Enhanced debugging for slot formulas
+                                if 'slot_ids' in rec.formula_field and final_value == 0:
+                                    debug_info = []
+                                    for i, record in enumerate(filtered_records[:3]):  # Check first 3 records
+                                        try:
+                                            slot_count = len(getattr(record, 'slot_ids', []))
+                                            debug_info.append(f"Record {i+1}: {slot_count} slots")
+                                        except Exception as e:
+                                            debug_info.append(f"Record {i+1}: Error accessing slot_ids - {e}")
+                                    
+                                    rec.formula_notes = f"Formula evaluated for {assigned_user.name}. Debug: {'; '.join(debug_info)}. Total records: {len(filtered_records)}"
+                                else:
+                                    rec.formula_notes = f"Formula evaluated for {assigned_user.name}"
+                                    
                             except Exception as e:
                                 _logger.error(f"Error evaluating formula for KPI {rec.name}: {e}")
+                                rec.formula_notes = f"Error evaluating for {assigned_user.name}: {e}"
                                 final_value = 0.0
 
                         # Update KPI values safely
