@@ -7,7 +7,7 @@ class KPIReportSubmission(models.Model):
 
     # SQL constraints for data integrity
     _sql_constraints = [
-        ('unique_kpi_user_date', 'UNIQUE(kpi_id, user_id, date(date))', 'Only one submission per user per day'),
+        ('unique_kpi_user_date', 'UNIQUE(kpi_id, user_id, date(date))', 'Only one submission per KPI per user per day is allowed'),
         ('achievement_percent_range', 'CHECK(achievement_percent >= 0)', 'Achievement percent cannot be negative'),
     ]
 
