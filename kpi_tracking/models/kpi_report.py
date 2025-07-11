@@ -250,6 +250,7 @@ class KPIReport(models.Model):
             self.sudo().value = self.manual_value
 
             for user in self.assigned_user_ids:
+                # Check for existing submission for today
                 existing = self.env[KPI_REPORT_SUBMISSION_MODEL].sudo().search([
                     ('kpi_id', '=', self.id),
                     ('user_id', '=', user.id),
@@ -266,9 +267,14 @@ class KPIReport(models.Model):
                 }
 
                 if existing:
+                    # Update existing submission instead of creating new one
                     existing.sudo().write(vals)
                 else:
+                    # Create new submission only if none exists for today
                     self.env[KPI_REPORT_SUBMISSION_MODEL].sudo().create(vals)
+            
+            # Create/update group submission history
+            self._create_group_submission_history()
 
         else:
             self.sudo().scheduled_update_kpis()
@@ -386,8 +392,16 @@ class KPIReport(models.Model):
                             errors.append(f"KPI {rec.name}: {str(e)}")
                             continue
 
-                        # Create submission record safely
+                        # Create or update submission record safely
                         try:
+                            # Check for existing submission for today
+                            existing_submission = self.env[KPI_REPORT_SUBMISSION_MODEL].sudo().search([
+                                ('kpi_id', '=', rec.id),
+                                ('user_id', '=', assigned_user.id),
+                                ('date', '>=', datetime.combine(today, datetime.min.time())),
+                                ('date', '<', datetime.combine(today + relativedelta(days=1), datetime.min.time())),
+                            ], limit=1)
+                            
                             submission_vals = {
                                 'kpi_id': rec.id,
                                 'user_id': assigned_user.id,
@@ -395,13 +409,26 @@ class KPIReport(models.Model):
                                 'date': fields.Datetime.now(),
                                 'note': f'Auto-updated on {today}'
                             }
-                            self.env[KPI_REPORT_SUBMISSION_MODEL].sudo().create(submission_vals)
+                            
+                            if existing_submission:
+                                # Update existing submission instead of creating new one
+                                existing_submission.sudo().write(submission_vals)
+                            else:
+                                # Create new submission only if none exists for today
+                                self.env[KPI_REPORT_SUBMISSION_MODEL].sudo().create(submission_vals)
+                                
                         except Exception as e:
-                            _logger.error(f"Error creating submission for KPI {rec.name}: {e}")
-
+                            _logger.error(f"Error creating/updating submission for KPI {rec.name}: {e}")
+                
                     except Exception as e:
                         _logger.error(f"Error processing user {assigned_user.name} for KPI {rec.name}: {e}")
                         errors.append(f"KPI {rec.name} - User {assigned_user.name}: {str(e)}")
+                
+                # Create/update group submission history after all users are processed
+                try:
+                    rec._create_group_submission_history()
+                except Exception as e:
+                    _logger.error(f"Error creating group submission for KPI {rec.name}: {e}")
                         
             except Exception as e:
                 _logger.error(f"Error processing KPI {rec.name}: {e}")
@@ -626,3 +653,39 @@ class KPIReport(models.Model):
             if field:
                 self.sudo().write({'filter_field_id': field.id})
                 _logger.info(f"Auto-fixed filter_field_id for KPI {self.name}")
+
+    def _create_group_submission_history(self):
+        """Create or update group submission history when KPI is updated"""
+        if not self.report_id:
+            return
+            
+        today = fields.Date.today()
+        
+        # Check if group submission already exists for today
+        existing_group_submission = self.env[KPI_REPORT_GROUP_SUBMISSION_MODEL].sudo().search([
+            ('report_id', '=', self.report_id.id),
+            ('date', '>=', datetime.combine(today, datetime.min.time())),
+            ('date', '<', datetime.combine(today + relativedelta(days=1), datetime.min.time())),
+        ], limit=1)
+        
+        # Calculate group achievement percentage
+        group_achievement = self.report_id.group_achievement_percent
+        group_score_label = self.report_id.score_label
+        group_score_color = self.report_id.score_color
+        
+        group_submission_vals = {
+            'report_id': self.report_id.id,
+            'value': group_achievement,
+            'score_label': group_score_label,
+            'score_color': group_score_color,
+            'date': fields.Datetime.now(),
+            'user_id': self.env.user.id,
+            'note': f'Group submission updated on {today} - triggered by KPI: {self.name}'
+        }
+        
+        if existing_group_submission:
+            # Update existing group submission
+            existing_group_submission.sudo().write(group_submission_vals)
+        else:
+            # Create new group submission
+            self.env[KPI_REPORT_GROUP_SUBMISSION_MODEL].sudo().create(group_submission_vals)

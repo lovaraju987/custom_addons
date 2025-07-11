@@ -1,6 +1,8 @@
 from statistics import mean
 from odoo import models, fields, api
 from odoo.exceptions import UserError
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 
 
 
@@ -62,6 +64,37 @@ class KPIReportGroup(models.Model):
                     kpi.sudo().action_manual_refresh_kpi()
                 else:
                     kpi.sudo().scheduled_update_kpis()
+            
+            # Create group submission history after all KPIs are refreshed
+            rec._create_group_submission_history()
+    
+    def _create_group_submission_history(self):
+        """Create or update group submission history"""
+        today = fields.Date.today()
+        
+        # Check if group submission already exists for today
+        existing_group_submission = self.env['kpi.report.group.submission'].sudo().search([
+            ('report_id', '=', self.id),
+            ('date', '>=', datetime.combine(today, datetime.min.time())),
+            ('date', '<', datetime.combine(today + relativedelta(days=1), datetime.min.time())),
+        ], limit=1)
+        
+        group_submission_vals = {
+            'report_id': self.id,
+            'value': self.group_achievement_percent,
+            'score_label': self.score_label,
+            'score_color': self.score_color,
+            'date': fields.Datetime.now(),
+            'user_id': self.env.user.id,
+            'note': f'Group submission updated on {today}'
+        }
+        
+        if existing_group_submission:
+            # Update existing group submission
+            existing_group_submission.sudo().write(group_submission_vals)
+        else:
+            # Create new group submission
+            self.env['kpi.report.group.submission'].sudo().create(group_submission_vals)
   
 
 

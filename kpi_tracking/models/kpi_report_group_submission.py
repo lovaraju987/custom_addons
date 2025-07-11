@@ -6,6 +6,11 @@ class KPIReportGroupSubmission(models.Model):
     _description = 'KPI Report Group Submission History'
     _order = 'date desc'
 
+    # SQL constraints for data integrity
+    _sql_constraints = [
+        ('unique_group_date', 'UNIQUE(report_id, date(date))', 'Only one group submission per day is allowed'),
+    ]
+
     report_id = fields.Many2one('kpi.report.group', required=True, ondelete='cascade')
     date = fields.Datetime(string="Submitted At", default=fields.Datetime.now)    
     value = fields.Float(string="Achievement (%)")
