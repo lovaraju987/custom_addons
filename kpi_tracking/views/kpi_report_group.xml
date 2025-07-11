@@ -28,10 +28,12 @@
                     </group>
                     <notebook>
                         <page string="KPIs">
-                            <field name="kpi_ids" context="{'default_report_id': id}" mode="tree,form">
+                            <field name="kpi_ids" context="{'default_report_id': id}">
                                 <tree decoration-success="achievement_percent &gt; 100"
                                                     decoration-warning="achievement_percent &gt; 50 and achievement_percent &lt; 100"
-                                                    decoration-danger="achievement_percent &lt; 50">
+                                                    decoration-danger="achievement_percent &lt; 50"
+                                                    create="true" delete="true" edit="true"
+                                                    open_form_view="true">
                                     <field name="name"/>
                                     <field name="last_submitted"/>
                                     <field name="department"/>
@@ -44,16 +46,13 @@
                                     <field name="achievement_percent" widget="progressbar"/>
                                     <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>
                                     <field name="score_color" invisible="1"/>
+                                    <button name="action_manual_refresh_kpi" 
+                                            string="Submit" 
+                                            type="object" 
+                                            class="btn-primary"
+                                            invisible="kpi_type != 'manual'"
+                                            help="Submit value for this manual KPI"/>
                                 </tree>
-                                <form>
-                                    <group>
-                                        <field name="name"/>
-                                        <field name="kpi_type"/>
-                                        <field name="target_value"/>
-                                        <field name="value"/>
-                                        <field name="achievement_percent"/>
-                                    </group>
-                                </form>
                             </field>
                         </page>
                         <page string="All Submissions">
@@ -103,4 +102,13 @@
               parent="menu_kpi_root"
               action="action_kpi_report_group"
               sequence="40"/>
+
+    <!-- Action for opening KPI from group view -->
+    <record id="action_kpi_from_group" model="ir.actions.act_window">
+        <field name="name">KPI Details</field>
+        <field name="res_model">kpi.report</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_kpi_report_form"/>
+        <field name="target">new</field>
+    </record>
 </odoo>
