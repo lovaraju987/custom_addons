@@ -364,8 +364,18 @@ class KPIReport(models.Model):
                                 (rec.filter_field, '<=', end_date)
                             ]
 
-                        # Safe domain evaluation
-                        domain = []
+                        # Calculate count_a using only time filter (domain_base)
+                        try:
+                            records_a = model.search(domain_base)
+                            count_a = len(records_a)
+                        except Exception as e:
+                            _logger.error(f"Error searching records for count_a in KPI {rec.name}: {e}")
+                            continue
+
+                        # Calculate count_b using time filter + domain filter
+                        count_b = 0
+                        domain_with_filter = domain_base[:]
+                        
                         if rec.source_domain:
                             try:
                                 local_vars = {
@@ -376,38 +386,37 @@ class KPIReport(models.Model):
                                     'yesterday': today - timedelta(days=1),
                                     'datetime': fields.Datetime,
                                 }
-                                domain = eval(rec.source_domain, {}, local_vars)
-                                if not isinstance(domain, list):
+                                additional_domain = eval(rec.source_domain, {}, local_vars)
+                                if not isinstance(additional_domain, list):
                                     raise ValueError("Domain must be a list")
+                                domain_with_filter += additional_domain
                             except Exception as e:
                                 _logger.error(f"Error evaluating domain for KPI {rec.name}: {e}")
-                                domain = []
-
-                        domain += domain_base
                         
-                        # Safe model access
                         try:
-                            records = model.search(domain)
-                            count_a = len(records)
+                            if rec.count_field:
+                                # For boolean count_field, filter records by the field
+                                records_b = model.search(domain_with_filter)
+                                count_b = len(records_b.filtered(lambda r: getattr(r, rec.count_field, False)))
+                            else:
+                                # For conversion rates, count_b is records matching time + domain filters
+                                records_b = model.search(domain_with_filter)
+                                count_b = len(records_b)
                         except Exception as e:
-                            _logger.error(f"Error searching records for KPI {rec.name}: {e}")
-                            continue
-
-                        count_b = 0
-                        if rec.count_field:
-                            try:
-                                count_b = len(records.filtered(lambda r: getattr(r, rec.count_field, False)))
-                            except AttributeError:
-                                _logger.warning(f"Count field '{rec.count_field}' not found in model {rec.source_model}")
+                            _logger.error(f"Error calculating count_b for KPI {rec.name}: {e}")
+                            count_b = 0
 
                         # Safe formula evaluation
                         final_value = 0.0
                         if rec.formula_field:
                             try:
+                                # Get records for formula evaluation (use time + domain for more context)
+                                formula_records = records_b if 'records_b' in locals() else records_a
+                                
                                 local_vars = {
                                     'count_a': count_a,
                                     'count_b': count_b,
-                                    'records': records,
+                                    'records': formula_records,
                                     'assigned_user': assigned_user,
                                     'today': today,
                                     'sum': sum,
