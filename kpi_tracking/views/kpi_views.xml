@@ -28,14 +28,15 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <div class="alert alert-warning" role="alert" invisible="not needs_filter_field_migration">
-                        <strong>Data Migration Required:</strong> This KPI has filter field data that needs to be migrated to the new format. 
-                        Click "Fix Filter Field Data" below to resolve this.
+                    <div class="alert alert-warning" role="alert" invisible="not needs_filter_field_migration and not needs_count_field_migration">
+                        <strong>Data Migration Required:</strong> This KPI has field data that needs to be migrated to the new format. 
+                        Click "Fix Field Data" below to resolve this.
                     </div>
                 </header>
                 <sheet>
                     <!-- All fields now editable for KPI creation/editing -->
                     <field name="needs_filter_field_migration" invisible="1"/>
+                    <field name="needs_count_field_migration" invisible="1"/>
 
                     <group>
                         <field name="name"/>
@@ -61,10 +62,11 @@
                         invisible="kpi_type != 'auto'">
                         <field name="source_model_id" help="Select the Odoo model to calculate KPI from"/>
                         <field name="source_model" invisible="1"/>
-                        <field name="filter_field_id" help="Select any field from the model to use for filtering"/>
+                        <field name="filter_field_id" help="Select date/datetime field from the model for filtering by time period"/>
                         <field name="filter_field" invisible="1"/>
                         <field name="filter_type" help="Time period for filtering records"/>
-                        <field name="count_field"/>
+                        <field name="count_field_id" help="Select boolean field to count for count_b calculation (optional)"/>
+                        <field name="count_field" invisible="1"/>
                         <field name="formula_field" help="Formula to calculate KPI value. Available variables: count_a, count_b, records, assigned_user, today"/>
                         <field name="source_domain" 
                                widget="domain" 
@@ -88,12 +90,12 @@
                                 class="btn btn-success"
                                 invisible="kpi_type != 'manual'"/>
                         <button name="action_migrate_filter_fields"
-                                string="Fix Filter Field Data"
+                                string="Fix Field Data"
                                 type="object"
                                 class="btn btn-warning"
                                 groups="kpi_tracking.group_kpi_admin"
-                                help="Migrate old filter field data to new format"
-                                invisible="not needs_filter_field_migration"/>
+                                help="Migrate old filter and count field data to new format"
+                                invisible="not needs_filter_field_migration and not needs_count_field_migration"/>
                     </group>
 
                     <notebook>
