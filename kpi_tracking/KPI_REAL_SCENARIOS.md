@@ -79,9 +79,9 @@ KPI Details:
 
 Auto Tracking Configuration:
   Source Model: crm.lead
-  Filter Field: create_date
+  Filter Field: create_date (selected from dropdown)
   Filter Type: this_month
-  Count Field: is_won
+  Count Field: is_won (selected from boolean fields dropdown)
   
 Source Domain: [('active', '=', True)]
 Formula: (count_b / count_a) * 100 if count_a > 0 else 0
@@ -198,9 +198,9 @@ KPI Details:
 
 Auto Tracking Configuration:
   Source Model: hr.employee
-  Filter Field: create_date
+  Filter Field: create_date (selected from dropdown)
   Filter Type: this_month
-  Count Field: active
+  Count Field: active (selected from boolean fields dropdown)
   
 Source Domain: [('employee_type', '=', 'employee')]
 Formula: (count_b / count_a) * 100 if count_a > 0 else 100
@@ -239,7 +239,7 @@ Auto Tracking Configuration:
   Source Model: hr.employee
   Filter Field: (not used for this calculation)
   Filter Type: (not applicable)
-  Count Field: training_completed
+  Count Field: training_completed (selected from boolean fields dropdown)
   
 Source Domain: [('active', '=', True), ('employee_type', '=', 'employee')]
 Formula: (count_b / count_a) * 100 if count_a > 0 else 0
@@ -803,6 +803,52 @@ Formula: sum((record.close_date - record.create_date).total_seconds() / 3600 for
 - **Actual**: 3.4 hours
 - **Achievement**: 100%
 - **Score**: Excellent (Green badge)
+
+---
+
+### **Count Field Selection Guide**
+
+#### **What is Count Field?**
+The **Count Field** is an optional boolean field that determines what gets counted for `count_b` calculations. 
+
+#### **How to Select Count Field**
+1. **Choose Source Model** first (e.g., crm.lead, sale.order)
+2. **Count Field dropdown** will show all boolean fields from that model
+3. **Select the boolean field** that determines your success criteria
+4. **count_b** will count records where this field = True
+
+#### **Common Boolean Fields by Model**
+- **crm.lead**: `is_won`, `active`, `is_qualified`
+- **sale.order**: `is_confirmed`, `is_delivered`, `is_paid`
+- **hr.employee**: `active`, `training_completed`, `performance_review_done`
+- **project.task**: `is_closed`, `is_approved`, `is_milestone`
+- **helpdesk.ticket**: `is_closed`, `first_call_resolved`, `customer_satisfied`
+
+#### **When to Use Count Field**
+- ✅ **Use when**: You need percentage calculations (conversion rates, success rates)
+- ✅ **Use when**: You want to count specific conditions (won leads, completed tasks)
+- ❌ **Don't use when**: You only need total counts (use `count_a` in formula)
+- ❌ **Don't use when**: You're doing sum/average calculations (use `records` in formula)
+
+#### **Count Field Examples**
+
+**Lead Conversion Rate:**
+- **Source Model**: crm.lead
+- **Count Field**: is_won (boolean)
+- **Result**: count_a = total leads, count_b = won leads
+- **Formula**: `(count_b / count_a) * 100`
+
+**Order Fulfillment Rate:**
+- **Source Model**: sale.order  
+- **Count Field**: is_delivered (boolean)
+- **Result**: count_a = total orders, count_b = delivered orders
+- **Formula**: `(count_b / count_a) * 100`
+
+**No Count Field Needed:**
+- **Source Model**: sale.order
+- **Count Field**: (leave empty)
+- **Result**: count_a = total orders, count_b = 0 (not used)
+- **Formula**: `sum(record.amount_total for record in records)`
 
 ---
 

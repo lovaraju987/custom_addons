@@ -153,13 +153,19 @@ class KPIReport(models.Model):
     string='Filter Field',
     domain="[('model_id', '=', source_model_id)]"  # Remove ttype filter
 )
-    filter_field = fields.Char(related='filter_field_id.name', store=True, readonly=True)
+    filter_field = fields.Char(related='filter_field_id.name', store=True, readonly=True, string='Filter Field Name')
     filter_type = fields.Selection([
         ('today', 'Today'),
         ('this_week', 'This Week'),
         ('this_month', 'This Month')
     ])
-    count_field = fields.Char()
+    count_field_id = fields.Many2one(
+        'ir.model.fields',
+        string='Count Field',
+        domain="[('model_id', '=', source_model_id), ('ttype', '=', 'boolean')]",
+        help="Boolean field to count for count_b calculation"
+    )
+    count_field = fields.Char(related='count_field_id.name', store=True, readonly=True, string='Count Field Name')
     formula_field = fields.Text()
     source_domain = fields.Text(string="Source Domain", help="Domain filter for records")
     domain_test_result = fields.Char(readonly=True)
@@ -171,14 +177,24 @@ class KPIReport(models.Model):
         compute="_compute_needs_migration",
         help="Indicates if this KPI needs filter field data migration"
     )
+    needs_count_field_migration = fields.Boolean(
+        string="Needs Count Field Migration",
+        compute="_compute_needs_migration",
+        help="Indicates if this KPI needs count field data migration"
+    )
 
-    @api.depends('filter_field', 'filter_field_id', 'source_model_id')
+    @api.depends('filter_field', 'filter_field_id', 'source_model_id', 'count_field', 'count_field_id')
     def _compute_needs_migration(self):
-        """Check if KPI needs filter field migration"""
+        """Check if KPI needs filter field or count field migration"""
         for record in self:
             record.needs_filter_field_migration = (
                 bool(record.filter_field) and 
                 not record.filter_field_id and 
+                bool(record.source_model_id)
+            )
+            record.needs_count_field_migration = (
+                bool(record.count_field) and 
+                not record.count_field_id and 
                 bool(record.source_model_id)
             )
 
@@ -208,6 +224,35 @@ class KPIReport(models.Model):
                 self.formula_notes = f"Selected datetime field: {self.filter_field_id.name}. Use filter_type to specify time range."
             else:
                 self.formula_notes = f"Warning: Field {self.filter_field_id.name} is not a date/datetime field."
+
+    @api.onchange('count_field_id')
+    def _onchange_count_field_id(self):
+        """Update formula notes when count field changes"""
+        if self.count_field_id:
+            field_type = self.count_field_id.ttype
+            if field_type == 'boolean':
+                self.formula_notes = f"Selected boolean field: {self.count_field_id.name}. Records where this field is True will be counted as count_b."
+            else:
+                self.formula_notes = f"Warning: Field {self.count_field_id.name} is not a boolean field. Only boolean fields should be used for count_b calculations."
+        else:
+            if self.filter_field_id:
+                self._onchange_filter_field_id()  # Restore filter field message
+
+    @api.onchange('source_model_id')
+    def _onchange_source_model_id(self):
+        """Reset related fields when source model changes"""
+        self.domain_test_result = ''
+        self.filter_field_id = False
+        self.count_field_id = False  # Reset count field when model changes
+        if self.source_model_id:
+            try:
+                # Test if model can be accessed
+                self.env[self.source_model_id.model].check_access_rights('read')
+                self.formula_notes = "Model loaded successfully. Select a date/datetime field for filtering and optionally a boolean field for counting."
+            except Exception as e:
+                self.formula_notes = f"Error loading model: {e}"
+        else:
+            self.formula_notes = ""
 
     def action_test_domain(self):
         self.ensure_one()
@@ -561,14 +606,15 @@ class KPIReport(models.Model):
     @api.model
     def migrate_filter_field_data(self):
         """
-        Migrate existing filter_field string data to filter_field_id Many2one field.
+        Migrate existing filter_field and count_field string data to Many2one fields.
         This method can be called manually to fix data after module upgrade.
         """
         # Find KPIs with filter_field data but no filter_field_id
         kpis_to_migrate = self.search([
-            ('filter_field', '!=', False),
-            ('filter_field_id', '=', False),
-            ('source_model_id', '!=', False)
+            ('source_model_id', '!=', False),
+            '|',
+            '&', ('filter_field', '!=', False), ('filter_field_id', '=', False),
+            '&', ('count_field', '!=', False), ('count_field_id', '=', False)
         ])
         
         migrated_count = 0
@@ -576,19 +622,36 @@ class KPIReport(models.Model):
         
         for kpi in kpis_to_migrate:
             try:
-                # Find the corresponding ir.model.fields record
-                field = self.env['ir.model.fields'].search([
-                    ('model_id', '=', kpi.source_model_id.id),
-                    ('name', '=', kpi.filter_field)
-                ], limit=1)
-                
-                if field:
-                    kpi.sudo().write({'filter_field_id': field.id})
-                    migrated_count += 1
-                    _logger.info(f"Migrated KPI {kpi.name}: filter_field '{kpi.filter_field}' -> filter_field_id {field.id}")
-                else:
-                    failed_count += 1
-                    _logger.warning(f"Could not find field '{kpi.filter_field}' for KPI {kpi.name} (model: {kpi.source_model_id.model})")
+                # Migrate filter field
+                if kpi.filter_field and not kpi.filter_field_id:
+                    filter_field = self.env['ir.model.fields'].search([
+                        ('model_id', '=', kpi.source_model_id.id),
+                        ('name', '=', kpi.filter_field)
+                    ], limit=1)
+                    
+                    if filter_field:
+                        kpi.sudo().write({'filter_field_id': filter_field.id})
+                        migrated_count += 1
+                        _logger.info(f"Migrated KPI {kpi.name}: filter_field '{kpi.filter_field}' -> filter_field_id {filter_field.id}")
+                    else:
+                        failed_count += 1
+                        _logger.warning(f"Could not find filter field '{kpi.filter_field}' for KPI {kpi.name} (model: {kpi.source_model_id.model})")
+
+                # Migrate count field
+                if kpi.count_field and not kpi.count_field_id:
+                    count_field = self.env['ir.model.fields'].search([
+                        ('model_id', '=', kpi.source_model_id.id),
+                        ('name', '=', kpi.count_field),
+                        ('ttype', '=', 'boolean')
+                    ], limit=1)
+                    
+                    if count_field:
+                        kpi.sudo().write({'count_field_id': count_field.id})
+                        migrated_count += 1
+                        _logger.info(f"Migrated KPI {kpi.name}: count_field '{kpi.count_field}' -> count_field_id {count_field.id}")
+                    else:
+                        failed_count += 1
+                        _logger.warning(f"Could not find boolean count field '{kpi.count_field}' for KPI {kpi.name} (model: {kpi.source_model_id.model})")
                     
             except Exception as e:
                 failed_count += 1
@@ -597,7 +660,7 @@ class KPIReport(models.Model):
         return {
             'migrated': migrated_count,
             'failed': failed_count,
-            'message': f"Migration completed: {migrated_count} KPIs migrated, {failed_count} failed"
+            'message': f"Migration completed: {migrated_count} fields migrated, {failed_count} failed"
         }
 
     def action_migrate_filter_fields(self):
@@ -627,32 +690,54 @@ class KPIReport(models.Model):
 
     @api.model
     def create(self, vals):
-        """Override create to handle filter field migration if needed"""
+        """Override create to handle field migration if needed"""
         record = super().create(vals)
-        record._try_fix_filter_field()
+        record._try_fix_filter_and_count_fields()
         return record
 
     def write(self, vals):
-        """Override write to handle filter field migration if needed"""
+        """Override write to handle field migration if needed"""
         result = super().write(vals)
-        if 'source_model_id' in vals or 'filter_field' in vals:
+        if 'source_model_id' in vals or 'filter_field' in vals or 'count_field' in vals:
             for record in self:
-                record._try_fix_filter_field()
+                record._try_fix_filter_and_count_fields()
         return result
 
-    def _try_fix_filter_field(self):
+    def _try_fix_filter_and_count_fields(self):
         """
-        Automatically try to fix filter_field_id if it's empty but filter_field has value
+        Automatically try to fix filter_field_id and count_field_id if they're empty but have values
         """
-        if self.filter_field and not self.filter_field_id and self.source_model_id:
-            field = self.env['ir.model.fields'].search([
+        if not self.source_model_id:
+            return
+            
+        updates = {}
+        
+        # Fix filter field
+        if self.filter_field and not self.filter_field_id:
+            filter_field = self.env['ir.model.fields'].search([
                 ('model_id', '=', self.source_model_id.id),
                 ('name', '=', self.filter_field)
             ], limit=1)
             
-            if field:
-                self.sudo().write({'filter_field_id': field.id})
+            if filter_field:
+                updates['filter_field_id'] = filter_field.id
                 _logger.info(f"Auto-fixed filter_field_id for KPI {self.name}")
+
+        # Fix count field
+        if self.count_field and not self.count_field_id:
+            count_field = self.env['ir.model.fields'].search([
+                ('model_id', '=', self.source_model_id.id),
+                ('name', '=', self.count_field),
+                ('ttype', '=', 'boolean')
+            ], limit=1)
+            
+            if count_field:
+                updates['count_field_id'] = count_field.id
+                _logger.info(f"Auto-fixed count_field_id for KPI {self.name}")
+        
+        # Apply updates if any
+        if updates:
+            self.sudo().write(updates)
 
     def _create_group_submission_history(self):
         """Create or update group submission history when KPI is updated"""

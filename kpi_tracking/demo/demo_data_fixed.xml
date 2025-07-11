@@ -63,7 +63,7 @@
             <field name="kpi_type">manual</field>
             <field name="report_id" ref="demo_hr_kpi_group"/>
             <field name="department">hr</field>
-            <field name="report_type">quarterly</field>
+            <field name="report_type">monthly</field>
         </record>
 
         <record id="demo_training_completion_kpi" model="kpi.report">
