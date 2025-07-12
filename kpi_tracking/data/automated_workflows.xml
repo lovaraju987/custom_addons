@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Automated Reminders and Follow-ups -->
+    
+    <!-- CRON: Send Action Item Reminders -->
+    <record id="ir_cron_action_item_reminders" model="ir.cron">
+        <field name="name">Send Action Item Due Date Reminders</field>
+        <field name="model_id" ref="model_kpi_action_item"/>
+        <field name="state">code</field>
+        <field name="code">
+# Find action items due tomorrow or overdue
+# Use Odoo's available datetime functions
+tomorrow = fields.Date.today() + timedelta(days=1)
+today = fields.Date.today()
+
+# Action items due tomorrow
+due_tomorrow = model.search([
+    ('due_date', '=', tomorrow),
+    ('status', 'in', ['open', 'in_progress'])
+])
+
+# Overdue action items
+overdue = model.search([
+    ('due_date', '&lt;', today),
+    ('status', 'in', ['open', 'in_progress'])
+])
+
+template_reminder = env.ref('kpi_tracking.kpi_action_item_reminder_email_template', raise_if_not_found=False)
+template_overdue = env.ref('kpi_tracking.kpi_action_item_overdue_email_template', raise_if_not_found=False)
+
+# Send reminders for items due tomorrow
+if template_reminder:
+    for item in due_tomorrow:
+        if item.assigned_to_id.email:
+            template_reminder.send_mail(item.id, force_send=True)
+
+# Send overdue notifications
+if template_overdue:
+    for item in overdue:
+        if item.assigned_to_id.email:
+            template_overdue.send_mail(item.id, force_send=True)
+        </field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+        <field name="doall">False</field>
+    </record>
+
+    <!-- CRON: Send Coaching Session Reminders -->
+    <record id="ir_cron_coaching_reminders" model="ir.cron">
+        <field name="name">Send Coaching Session Reminders</field>
+        <field name="model_id" ref="model_kpi_performance_coaching"/>
+        <field name="state">code</field>
+        <field name="code">
+# Find coaching sessions scheduled for tomorrow
+tomorrow_start = fields.Datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+tomorrow_end = tomorrow_start + timedelta(days=1)
+
+sessions_tomorrow = model.search([
+    ('session_date', '&gt;=', tomorrow_start),
+    ('session_date', '&lt;', tomorrow_end),
+    ('state', '=', 'scheduled')
+])
+
+template = env.ref('kpi_tracking.kpi_coaching_reminder_email_template', raise_if_not_found=False)
+
+if template:
+    for session in sessions_tomorrow:
+        # Send to employee
+        if session.employee_id.user_id and session.employee_id.user_id.email:
+            template.send_mail(session.id, force_send=True, email_values={
+                'email_to': session.employee_id.user_id.email
+            })
+        
+        # Send to manager
+        if session.manager_id.user_id and session.manager_id.user_id.email:
+            template.send_mail(session.id, force_send=True, email_values={
+                'email_to': session.manager_id.user_id.email
+            })
+        </field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+        <field name="doall">False</field>
+    </record>
+
+    <!-- CRON: Escalate Pending Approvals -->
+    <record id="ir_cron_approval_escalation" model="ir.cron">
+        <field name="name">Escalate Pending Approval Workflows</field>
+        <field name="model_id" ref="model_kpi_approval_workflow"/>
+        <field name="state">code</field>
+        <field name="code">
+# Find approval workflows that have been pending too long
+cutoff_time = fields.Datetime.now() - timedelta(hours=48)  # Default escalation timeout
+
+pending_approvals = model.search([
+    ('state', 'in', ['submitted', 'under_review']),
+    ('request_date', '&lt;', cutoff_time)
+])
+
+for workflow in pending_approvals:
+    # Create activity for escalation
+    if workflow.next_approver_id:
+        workflow.activity_schedule(
+            'kpi_tracking.mail_activity_kpi_approval_reminder',
+            date_deadline=fields.Date.today(),
+            summary=f'Escalated: Please review approval request: {workflow.name}',
+            user_id=workflow.next_approver_id.id
+        )
+        
+        # Log escalation in chatter
+        workflow.message_post(
+            body=f"Approval request escalated due to timeout. Please review urgently.",
+            subtype_xmlid='mail.mt_comment'
+        )
+        </field>
+        <field name="interval_number">12</field>
+        <field name="interval_type">hours</field>
+        <field name="active">True</field>
+        <field name="doall">False</field>
+    </record>
+
+    <!-- CRON: Auto-close Resolved Discussions -->
+    <record id="ir_cron_auto_close_discussions" model="ir.cron">
+        <field name="name">Auto-close Resolved Discussions</field>
+        <field name="model_id" ref="model_kpi_discussion"/>
+        <field name="state">code</field>
+        <field name="code">
+# Auto-close discussions that have been resolved for more than 7 days
+cutoff_date = fields.Datetime.now() - timedelta(days=7)
+
+resolved_discussions = model.search([
+    ('state', '=', 'resolved'),
+    ('resolved_date', '&lt;', cutoff_date)
+])
+
+for discussion in resolved_discussions:
+    discussion.write({'state': 'closed'})
+    discussion.message_post(
+        body="Discussion automatically closed after 7 days in resolved state.",
+        subtype_xmlid='mail.mt_comment'
+    )
+        </field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+        <field name="doall">False</field>
+    </record>
+
+    <!-- CRON: Generate Performance Insights -->
+    <record id="ir_cron_performance_insights" model="ir.cron">
+        <field name="name">Generate Weekly Performance Insights</field>
+        <field name="model_id" ref="model_kpi_report"/>
+        <field name="state">code</field>
+        <field name="code">
+# Generate weekly performance insights and suggestions
+
+# Find KPIs with concerning performance trends
+underperforming_kpis = model.search([
+    ('achievement_percent', '&lt;', 70)
+])
+
+# Create automatic discussions for significantly underperforming KPIs
+for kpi in underperforming_kpis:
+    # Check if there's already an active discussion for performance issues
+    existing_discussion = env['kpi.discussion'].search([
+        ('kpi_id', '=', kpi.id),
+        ('discussion_type', '=', 'performance_review'),
+        ('state', 'in', ['active', 'draft'])
+    ], limit=1)
+    
+    if not existing_discussion and kpi.achievement_percent &lt; 50:
+        # Create automatic discussion for severely underperforming KPIs
+        env['kpi.discussion'].create({
+            'title': f'Performance Review Required: {kpi.name}',
+            'kpi_id': kpi.id,
+            'discussion_type': 'performance_review',
+            'priority': '2',  # High priority
+            'description': f'&lt;p&gt;This KPI is significantly underperforming at {kpi.achievement_percent:.1f}% of target.&lt;/p&gt;&lt;p&gt;Immediate review and action planning required.&lt;/p&gt;',
+            'assigned_to_ids': [(6, 0, kpi.assigned_user_ids.ids)],
+            'state': 'active'
+        })
+        </field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">weeks</field>
+        <field name="active">True</field>
+        <field name="doall">False</field>
+    </record>
+
+</odoo>

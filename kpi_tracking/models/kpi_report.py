@@ -626,6 +626,27 @@ class KPIReport(models.Model):
     # Simple boolean field instead of computed field for now
     is_admin = fields.Boolean(string="Can Edit KPI", default=True, store=False)
 
+    # Phase 3: Collaboration & Workflow Excellence - Related Records
+    discussion_ids = fields.One2many('kpi.discussion', 'kpi_id', string="Related Discussions")
+    action_item_ids = fields.One2many('kpi.action.item', 'kpi_id', string="Related Action Items")
+    coaching_session_ids = fields.One2many('kpi.performance.coaching', 'kpi_id', string="Related Coaching Sessions")
+    approval_workflow_ids = fields.One2many('kpi.approval.workflow', 'kpi_id', string="Related Approval Workflows")
+    
+    # Computed counts for smart buttons
+    discussion_count = fields.Integer(string="Discussion Count", compute="_compute_collaboration_counts", store=True)
+    action_item_count = fields.Integer(string="Action Item Count", compute="_compute_collaboration_counts", store=True)
+    coaching_session_count = fields.Integer(string="Coaching Session Count", compute="_compute_collaboration_counts", store=True)
+    approval_workflow_count = fields.Integer(string="Approval Workflow Count", compute="_compute_collaboration_counts", store=True)
+    
+    @api.depends('discussion_ids', 'action_item_ids', 'coaching_session_ids', 'approval_workflow_ids')
+    def _compute_collaboration_counts(self):
+        """Compute counts for smart buttons"""
+        for record in self:
+            record.discussion_count = len(record.discussion_ids)
+            record.action_item_count = len(record.action_item_ids)
+            record.coaching_session_count = len(record.coaching_session_ids)
+            record.approval_workflow_count = len(record.approval_workflow_ids)
+
     def _calculate_achievement_percent(self):
         """Calculate achievement percentage based on target type and direction"""
         if self.target_type in ['number', 'percent', 'currency', 'duration']:
@@ -818,3 +839,124 @@ class KPIReport(models.Model):
         else:
             # Create new group submission
             self.env[KPI_REPORT_GROUP_SUBMISSION_MODEL].sudo().create(group_submission_vals)
+
+    # Phase 3: Collaboration Action Methods for Smart Buttons
+    def action_view_discussions(self):
+        """Open related discussions"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Discussions for {self.name}',
+            'res_model': 'kpi.discussion',
+            'view_mode': 'tree,form',
+            'domain': [('kpi_id', '=', self.id)],
+            'context': {'default_kpi_id': self.id},
+            'target': 'current',
+        }
+    
+    def action_view_action_items(self):
+        """Open related action items"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Action Items for {self.name}',
+            'res_model': 'kpi.action.item',
+            'view_mode': 'tree,form',
+            'domain': [('kpi_id', '=', self.id)],
+            'context': {'default_kpi_id': self.id},
+            'target': 'current',
+        }
+    
+    def action_view_coaching_sessions(self):
+        """Open related coaching sessions"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Coaching Sessions for {self.name}',
+            'res_model': 'kpi.performance.coaching',
+            'view_mode': 'tree,form',
+            'domain': [('kpi_id', '=', self.id)],
+            'context': {'default_kpi_id': self.id},
+            'target': 'current',
+        }
+    
+    def action_view_approval_workflows(self):
+        """Open related approval workflows"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Approval Workflows for {self.name}',
+            'res_model': 'kpi.approval.workflow',
+            'view_mode': 'tree,form',
+            'domain': [('kpi_id', '=', self.id)],
+            'context': {'default_kpi_id': self.id},
+            'target': 'current',
+        }
+    
+    # Quick creation methods for collaboration features
+    def action_create_discussion(self):
+        """Quick create discussion for this KPI"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'New Discussion for {self.name}',
+            'res_model': 'kpi.discussion',
+            'view_mode': 'form',
+            'context': {
+                'default_kpi_id': self.id,
+                'default_title': f'Discussion about {self.name}',
+                'default_discussion_type': 'performance_review',
+                'default_current_value': self.value,
+                'default_target_value': self.target_value,
+            },
+            'target': 'new',
+        }
+    
+    def action_create_action_item(self):
+        """Quick create action item for this KPI"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'New Action Item for {self.name}',
+            'res_model': 'kpi.action.item',
+            'view_mode': 'form',
+            'context': {
+                'default_kpi_id': self.id,
+                'default_title': f'Action item for {self.name}',
+                'default_priority': 'medium',
+            },
+            'target': 'new',
+        }
+    
+    def action_create_coaching_session(self):
+        """Quick create coaching session for this KPI"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'New Coaching Session for {self.name}',
+            'res_model': 'kpi.performance.coaching',
+            'view_mode': 'form',
+            'context': {
+                'default_kpi_id': self.id,
+                'default_title': f'Coaching session for {self.name}',
+                'default_session_type': 'performance_improvement',
+                'default_current_performance': self.achievement_percent,
+            },
+            'target': 'new',
+        }
+    
+    def action_create_approval_workflow(self):
+        """Quick create approval workflow for this KPI"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'New Approval Workflow for {self.name}',
+            'res_model': 'kpi.approval.workflow',
+            'view_mode': 'form',
+            'context': {
+                'default_kpi_id': self.id,
+                'default_title': f'Approval workflow for {self.name}',
+                'default_workflow_type': 'target_change',
+            },
+            'target': 'new',
+        }

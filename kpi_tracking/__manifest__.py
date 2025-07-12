@@ -1,12 +1,12 @@
 {
     "name": "KPI Tracking & Performance Management",
-    "version": "17.1.3",
-    "summary": "Advanced KPI tracking with automated calculations, reporting, and performance analytics",
+    "version": "17.2.0",
+    "summary": "Advanced KPI tracking with collaboration, approval workflows, and performance coaching",
     "description": """
 KPI Tracking & Performance Management System
 ============================================
 
-A comprehensive performance management solution for tracking, monitoring, and evaluating Key Performance Indicators (KPIs) across different departments.
+A comprehensive performance management solution for tracking, monitoring, and evaluating Key Performance Indicators (KPIs) across different departments with advanced collaboration and workflow features.
 
 ✨ KEY FEATURES:
 • Manual and Automatic KPI tracking with step-by-step guidance
@@ -18,6 +18,38 @@ A comprehensive performance management solution for tracking, monitoring, and ev
 • Role-based access control (Admin/Manager/User)
 • Dashboard views with progress bars and color coding
 • CRON-based automated updates
+
+🚀 NEW COLLABORATION FEATURES (Phase 3):
+• KPI Discussions & Collaboration with action items
+• Advanced Approval Workflows for KPI changes
+• Performance Coaching & Feedback sessions
+• Smart notifications and automated reminders
+• Integrated mail threading and activity management
+• Real-time collaboration and progress tracking
+
+🎯 COLLABORATION & WORKFLOW EXCELLENCE:
+• Discussion forums for KPI performance reviews
+• Action item tracking with dependencies and progress
+• Approval workflows for target changes and modifications
+• Performance coaching sessions with goal tracking
+• Automated escalation and reminder systems
+• Template-based coaching for consistency
+
+💼 APPROVAL WORKFLOWS:
+• Target value change approvals
+• Formula modification workflows
+• Below-threshold justification processes
+• Multi-level approval hierarchies
+• Automated escalation and timeouts
+• Email notifications for all stakeholders
+
+🎓 PERFORMANCE COACHING:
+• Structured coaching sessions with agendas
+• Goal setting and progress tracking
+• Coaching templates for different scenarios
+• Performance improvement plans
+• Skills development tracking
+• Manager-employee collaboration tools
 
 🎯 TARGET TYPES SUPPORTED:
 • Number values
@@ -80,22 +112,28 @@ Ready to track performance!
     "license": "OPL-1",
     "price": 20.00,
     "currency": "USD",
-    "depends": ["base", "hr", "web"],
+    "depends": ["base", "hr", "web", "mail"],
     "data": [
         "security/security.xml",
         "security/kpi_tracking_rules.xml",
         "security/ir.model.access.csv",
+        "data/mail_activity_data.xml",
         "views/kpi_views.xml",
         "views/kpi_test_views.xml",
         "views/kpi_report_group.xml",
         "views/kpi_submission.xml",
         "views/kpi_group_submission.xml",
+        "views/kpi_discussion_views.xml",
+        "views/kpi_approval_workflow_views.xml",
+        "views/kpi_performance_coaching_views.xml",
         "data/email_template.xml",
+        "data/automated_workflows.xml",
         "data/cron.xml",
         "data/migration_actions.xml"
     ],
     "demo": [
         "demo/demo_data_fixed.xml",
+        "demo/collaboration_demo_data.xml",
     ],
     "images": [
         "static/description/banner.png",

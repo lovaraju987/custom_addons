@@ -1,4 +1,5 @@
 <odoo>
+  <!-- Existing KPI Manual Entry Email Template -->
   <record id="kpi_manual_entry_email_template" model="mail.template">
     <field name="name">KPI Manual Entry Reminder</field>
     <field name="model_id" ref="model_kpi_report"/>
@@ -12,4 +13,188 @@
     <field name="email_to">${user.email}</field>
     <field name="auto_delete" eval="True"/>
   </record>
+
+  <!-- KPI Discussion Email Templates -->
+  <record id="kpi_discussion_started_email_template" model="mail.template">
+    <field name="name">KPI Discussion Started Notification</field>
+    <field name="model_id" ref="model_kpi_discussion"/>
+    <field name="subject">KPI Discussion Started: ${object.title}</field>
+    <field name="body_html"><![CDATA[
+      <p>Hello,</p>
+      <p>A new KPI discussion has been started: <strong>${object.title}</strong></p>
+      <p><strong>KPI:</strong> ${object.kpi_name}</p>
+      <p><strong>Discussion Type:</strong> ${object.discussion_type}</p>
+      <p><strong>Priority:</strong> ${object.priority}</p>
+      <p><strong>Initiated by:</strong> ${object.initiator_id.name}</p>
+      <p>Please participate in this discussion and share your insights.</p>
+      <p>Access the discussion: <a href="/web#id=${object.id}&model=kpi.discussion">View Discussion</a></p>
+    ]]></field>
+    <field name="email_from">kpi@yourcompany.com</field>
+    <field name="auto_delete" eval="True"/>
+  </record>
+
+  <record id="kpi_action_item_assigned_email_template" model="mail.template">
+    <field name="name">KPI Action Item Assigned</field>
+    <field name="model_id" ref="model_kpi_action_item"/>
+    <field name="subject">Action Item Assigned: ${object.description}</field>
+    <field name="body_html"><![CDATA[
+      <p>Hello ${object.assigned_to_id.name},</p>
+      <p>A new action item has been assigned to you:</p>
+      <p><strong>Description:</strong> ${object.description}</p>
+      <p><strong>Due Date:</strong> ${object.due_date}</p>
+      <p><strong>Priority:</strong> ${object.priority}</p>
+      <p><strong>Related KPI:</strong> ${object.kpi_id.name}</p>
+      <p><strong>Discussion:</strong> ${object.discussion_id.title}</p>
+      <p>Please review and take appropriate action.</p>
+      <p>View Action Item: <a href="/web#id=${object.id}&model=kpi.action.item">View Details</a></p>
+    ]]></field>
+    <field name="email_from">kpi@yourcompany.com</field>
+    <field name="auto_delete" eval="True"/>
+  </record>
+
+  <!-- KPI Approval Workflow Email Templates -->
+  <record id="kpi_approval_submitted_email_template" model="mail.template">
+    <field name="name">KPI Approval Request Submitted</field>
+    <field name="model_id" ref="model_kpi_approval_workflow"/>
+    <field name="subject">Approval Required: ${object.name}</field>
+    <field name="body_html"><![CDATA[
+      <p>Hello,</p>
+      <p>A KPI approval request requires your attention:</p>
+      <p><strong>Request:</strong> ${object.name}</p>
+      <p><strong>Type:</strong> ${object.workflow_type}</p>
+      <p><strong>KPI:</strong> ${object.kpi_name}</p>
+      <p><strong>Requested by:</strong> ${object.requested_by_id.name}</p>
+      <p><strong>Priority:</strong> ${object.priority}</p>
+      % if object.workflow_type == 'target_change':
+      <p><strong>Current Target:</strong> ${object.current_target_value}</p>
+      <p><strong>Proposed Target:</strong> ${object.proposed_target_value}</p>
+      % endif
+      <p>Please review and approve/reject this request.</p>
+      <p>Review Request: <a href="/web#id=${object.id}&model=kpi.approval.workflow">Review Now</a></p>
+    ]]></field>
+    <field name="email_from">kpi@yourcompany.com</field>
+    <field name="auto_delete" eval="True"/>
+  </record>
+
+  <record id="kpi_approval_approved_email_template" model="mail.template">
+    <field name="name">KPI Approval Request Approved</field>
+    <field name="model_id" ref="model_kpi_approval_workflow"/>
+    <field name="subject">Approved: ${object.name}</field>
+    <field name="body_html"><![CDATA[
+      <p>Hello ${object.requested_by_id.name},</p>
+      <p>Your KPI approval request has been approved:</p>
+      <p><strong>Request:</strong> ${object.name}</p>
+      <p><strong>Type:</strong> ${object.workflow_type}</p>
+      <p><strong>KPI:</strong> ${object.kpi_name}</p>
+      <p><strong>Approved by:</strong> ${object.final_approver_id.name}</p>
+      <p><strong>Approval Date:</strong> ${object.approval_date}</p>
+      <p>You can now implement the approved changes.</p>
+      <p>View Request: <a href="/web#id=${object.id}&model=kpi.approval.workflow">View Details</a></p>
+    ]]></field>
+    <field name="email_from">kpi@yourcompany.com</field>
+    <field name="auto_delete" eval="True"/>
+  </record>
+
+  <record id="kpi_approval_rejected_email_template" model="mail.template">
+    <field name="name">KPI Approval Request Rejected</field>
+    <field name="model_id" ref="model_kpi_approval_workflow"/>
+    <field name="subject">Rejected: ${object.name}</field>
+    <field name="body_html"><![CDATA[
+      <p>Hello ${object.requested_by_id.name},</p>
+      <p>Your KPI approval request has been rejected:</p>
+      <p><strong>Request:</strong> ${object.name}</p>
+      <p><strong>Type:</strong> ${object.workflow_type}</p>
+      <p><strong>KPI:</strong> ${object.kpi_name}</p>
+      <p><strong>Rejection Reason:</strong></p>
+      <p>${object.rejection_reason}</p>
+      <p>Please review the feedback and submit a revised request if needed.</p>
+      <p>View Request: <a href="/web#id=${object.id}&model=kpi.approval.workflow">View Details</a></p>
+    ]]></field>
+    <field name="email_from">kpi@yourcompany.com</field>
+    <field name="auto_delete" eval="True"/>
+  </record>
+
+  <!-- KPI Performance Coaching Email Templates -->
+  <record id="kpi_coaching_scheduled_email_template" model="mail.template">
+    <field name="name">KPI Coaching Session Scheduled</field>
+    <field name="model_id" ref="model_kpi_performance_coaching"/>
+    <field name="subject">Coaching Session Scheduled: ${object.title}</field>
+    <field name="body_html"><![CDATA[
+      <p>Hello,</p>
+      <p>A KPI coaching session has been scheduled:</p>
+      <p><strong>Title:</strong> ${object.title}</p>
+      <p><strong>Employee:</strong> ${object.employee_name}</p>
+      <p><strong>Manager/Coach:</strong> ${object.manager_name}</p>
+      <p><strong>KPI:</strong> ${object.kpi_name}</p>
+      <p><strong>Session Date:</strong> ${object.session_date}</p>
+      <p><strong>Duration:</strong> ${object.duration_hours} hours</p>
+      <p><strong>Type:</strong> ${object.coaching_type}</p>
+      <p>Please prepare for this coaching session and bring any relevant materials.</p>
+      <p>View Session: <a href="/web#id=${object.id}&model=kpi.performance.coaching">View Details</a></p>
+    ]]></field>
+    <field name="email_from">kpi@yourcompany.com</field>
+    <field name="auto_delete" eval="True"/>
+  </record>
+
+  <record id="kpi_coaching_reminder_email_template" model="mail.template">
+    <field name="name">KPI Coaching Session Reminder</field>
+    <field name="model_id" ref="model_kpi_performance_coaching"/>
+    <field name="subject">Reminder: Coaching Session Tomorrow - ${object.title}</field>
+    <field name="body_html"><![CDATA[
+      <p>Hello,</p>
+      <p>This is a reminder that you have a KPI coaching session tomorrow:</p>
+      <p><strong>Title:</strong> ${object.title}</p>
+      <p><strong>Employee:</strong> ${object.employee_name}</p>
+      <p><strong>Manager/Coach:</strong> ${object.manager_name}</p>
+      <p><strong>KPI:</strong> ${object.kpi_name}</p>
+      <p><strong>Session Date:</strong> ${object.session_date}</p>
+      <p><strong>Duration:</strong> ${object.duration_hours} hours</p>
+      <p>Please be prepared and on time for the session.</p>
+      <p>View Session: <a href="/web#id=${object.id}&model=kpi.performance.coaching">View Details</a></p>
+    ]]></field>
+    <field name="email_from">kpi@yourcompany.com</field>
+    <field name="auto_delete" eval="True"/>
+  </record>
+
+  <!-- Action Item Reminder Templates -->
+  <record id="kpi_action_item_reminder_email_template" model="mail.template">
+    <field name="name">KPI Action Item Due Tomorrow</field>
+    <field name="model_id" ref="model_kpi_action_item"/>
+    <field name="subject">Reminder: Action Item Due Tomorrow - ${object.description}</field>
+    <field name="body_html"><![CDATA[
+      <p>Hello ${object.assigned_to_id.name},</p>
+      <p>This is a reminder that your action item is due tomorrow:</p>
+      <p><strong>Description:</strong> ${object.description}</p>
+      <p><strong>Due Date:</strong> ${object.due_date}</p>
+      <p><strong>Priority:</strong> ${object.priority}</p>
+      <p><strong>Related KPI:</strong> ${object.kpi_id.name}</p>
+      <p><strong>Discussion:</strong> ${object.discussion_id.title}</p>
+      <p><strong>Current Progress:</strong> ${object.progress_percent}%</p>
+      <p>Please ensure this action item is completed on time.</p>
+      <p>Update Progress: <a href="/web#id=${object.id}&model=kpi.action.item">Update Now</a></p>
+    ]]></field>
+    <field name="email_from">kpi@yourcompany.com</field>
+    <field name="auto_delete" eval="True"/>
+  </record>
+
+  <record id="kpi_action_item_overdue_email_template" model="mail.template">
+    <field name="name">KPI Action Item Overdue</field>
+    <field name="model_id" ref="model_kpi_action_item"/>
+    <field name="subject">OVERDUE: Action Item - ${object.description}</field>
+    <field name="body_html"><![CDATA[
+      <p>Hello ${object.assigned_to_id.name},</p>
+      <p><strong style="color: red;">Your action item is now overdue:</strong></p>
+      <p><strong>Description:</strong> ${object.description}</p>
+      <p><strong>Due Date:</strong> ${object.due_date}</p>
+      <p><strong>Days Overdue:</strong> ${(context_today() - object.due_date).days} days</p>
+      <p><strong>Priority:</strong> ${object.priority}</p>
+      <p><strong>Related KPI:</strong> ${object.kpi_id.name}</p>
+      <p><strong>Discussion:</strong> ${object.discussion_id.title}</p>
+      <p>Please complete this action item immediately or update the status.</p>
+      <p>Update Progress: <a href="/web#id=${object.id}&model=kpi.action.item">Update Now</a></p>
+    ]]></field>
+    <field name="email_from">kpi@yourcompany.com</field>
+    <field name="auto_delete" eval="True"/>
+  </record>
+
 </odoo>
