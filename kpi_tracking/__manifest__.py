@@ -1,6 +1,6 @@
 {
     "name": "KPI Tracking & Performance Management",
-    "version": "17.2.0",
+    "version": "17.4.6",
     "summary": "Advanced KPI tracking with collaboration, approval workflows, and performance coaching",
     "description": """
 KPI Tracking & Performance Management System
