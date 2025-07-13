@@ -34,9 +34,28 @@
                     </div>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_discussions" icon="fa-comments">
+                            <field string="Discussions" name="discussion_count" widget="statinfo"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" name="action_view_action_items" icon="fa-tasks">
+                            <field string="Action Items" name="action_item_count" widget="statinfo"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" name="action_view_coaching_sessions" icon="fa-user-md">
+                            <field string="Coaching" name="coaching_session_count" widget="statinfo"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" name="action_view_approval_workflows" icon="fa-check-circle-o">
+                            <field string="Approvals" name="approval_workflow_count" widget="statinfo"/>
+                        </button>
+                    </div>
+                    
                     <!-- All fields now editable for KPI creation/editing -->
                     <field name="needs_filter_field_migration" invisible="1"/>
                     <field name="needs_count_field_migration" invisible="1"/>
+                    <field name="discussion_count" invisible="1"/>
+                    <field name="action_item_count" invisible="1"/>
+                    <field name="coaching_session_count" invisible="1"/>
+                    <field name="approval_workflow_count" invisible="1"/>
 
                     <group>
                         <field name="name"/>
@@ -117,6 +136,51 @@
                                     <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>
                                     <field name="score_color" invisible="1"/>
                                     <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page string="Collaboration &amp; Feedback">
+                            <group>
+                                <group>
+                                    <button name="action_create_discussion" string="Start Discussion" type="object" class="btn btn-primary"/>
+                                    <button name="action_create_coaching_session" string="Schedule Coaching" type="object" class="btn btn-info"/>
+                                    <button name="action_create_approval_workflow" string="Request Approval" type="object" class="btn btn-warning"/>
+                                </group>
+                            </group>
+                            
+                            <separator string="Recent Discussions"/>
+                            <field name="discussion_ids" nolabel="1">
+                                <tree limit="5">
+                                    <field name="title"/>
+                                    <field name="discussion_type"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="initiator_id"/>
+                                    <field name="action_items_count"/>
+                                    <field name="create_date"/>
+                                </tree>
+                            </field>
+                            
+                            <separator string="Recent Coaching Sessions"/>
+                            <field name="coaching_session_ids" nolabel="1">
+                                <tree limit="5">
+                                    <field name="title"/>
+                                    <field name="employee_id"/>
+                                    <field name="manager_id"/>
+                                    <field name="coaching_type"/>
+                                    <field name="session_date"/>
+                                    <field name="state" widget="badge"/>
+                                </tree>
+                            </field>
+                            
+                            <separator string="Recent Approval Workflows"/>
+                            <field name="approval_workflow_ids" nolabel="1">
+                                <tree limit="5">
+                                    <field name="name"/>
+                                    <field name="workflow_type"/>
+                                    <field name="requested_by_id"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="request_date"/>
                                 </tree>
                             </field>
                         </page>

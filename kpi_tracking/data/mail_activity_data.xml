@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Mail Activity Types for KPI Tracking -->
+    <record id="mail_activity_kpi_coaching_review" model="mail.activity.type">
+        <field name="name">KPI Coaching Review</field>
+        <field name="summary">Review coaching session progress and outcomes</field>
+        <field name="category">meeting</field>
+        <field name="delay_count">7</field>
+        <field name="delay_unit">days</field>
+        <field name="delay_from">current_date</field>
+        <field name="res_model">kpi.performance.coaching</field>
+    </record>
+
+    <record id="mail_activity_kpi_action_item_followup" model="mail.activity.type">
+        <field name="name">KPI Action Item Follow-up</field>
+        <field name="summary">Follow up on action item progress</field>
+        <field name="category">default</field>
+        <field name="delay_count">3</field>
+        <field name="delay_unit">days</field>
+        <field name="delay_from">current_date</field>
+        <field name="res_model">kpi.action.item</field>
+    </record>
+
+    <record id="mail_activity_kpi_approval_reminder" model="mail.activity.type">
+        <field name="name">KPI Approval Reminder</field>
+        <field name="summary">Reminder to review and approve KPI request</field>
+        <field name="category">default</field>
+        <field name="delay_count">1</field>
+        <field name="delay_unit">days</field>
+        <field name="delay_from">current_date</field>
+        <field name="res_model">kpi.approval.workflow</field>
+    </record>
+
+    <record id="mail_activity_kpi_discussion_followup" model="mail.activity.type">
+        <field name="name">KPI Discussion Follow-up</field>
+        <field name="summary">Follow up on KPI discussion outcomes</field>
+        <field name="category">meeting</field>
+        <field name="delay_count">5</field>
+        <field name="delay_unit">days</field>
+        <field name="delay_from">current_date</field>
+        <field name="res_model">kpi.discussion</field>
+    </record>
+</odoo>
