@@ -1,7 +1,7 @@
 {
     "name": "KPI Tracking & Performance Management",
-    "version": "17.4.6",
-    "summary": "Advanced KPI tracking with collaboration, approval workflows, and performance coaching",
+    "version": "17.4.7",
+    "summary": "Advanced KPI tracking with employee integration, collaboration, approval workflows, and performance coaching",
     "description": """
 KPI Tracking & Performance Management System
 ============================================
@@ -10,6 +10,7 @@ A comprehensive performance management solution for tracking, monitoring, and ev
 
 ✨ KEY FEATURES:
 • Manual and Automatic KPI tracking with step-by-step guidance
+• Employee KPI Integration - View KPIs directly in employee profiles
 • Department-wise organization and reporting
 • Formula-based calculations from any Odoo model
 • Target achievement tracking with visual indicators
@@ -18,6 +19,14 @@ A comprehensive performance management solution for tracking, monitoring, and ev
 • Role-based access control (Admin/Manager/User)
 • Dashboard views with progress bars and color coding
 • CRON-based automated updates
+
+👥 EMPLOYEE KPI INTEGRATION (New in v17.4.7):
+• View assigned KPIs directly in employee profiles
+• Overall KPI achievement score and performance labels
+• KPI performance tracking in employee kanban/tree views
+• Quick access to employee KPI history and submissions
+• Performance-based employee filtering and grouping
+• Direct KPI discussion creation from employee profiles
 
 🚀 NEW COLLABORATION FEATURES (Phase 3):
 • KPI Discussions & Collaboration with action items
@@ -126,6 +135,7 @@ Ready to track performance!
         "views/kpi_discussion_views.xml",
         "views/kpi_approval_workflow_views.xml",
         "views/kpi_performance_coaching_views.xml",
+        "views/hr_employee_kpi_views.xml",
         "data/email_template.xml",
         "data/automated_workflows.xml",
         "data/cron.xml",

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Employee Form View Extension for KPI Integration -->
+    <record id="hr_employee_view_form_kpi" model="ir.ui.view">
+        <field name="name">hr.employee.form.kpi</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <!-- Add invisible KPI fields for use in conditions -->
+            <xpath expr="//field[@name='active']" position="after">
+                <field name="kpi_count" invisible="1"/>
+            </xpath>
+            
+            <!-- Add KPI Performance section after the company information -->
+            <xpath expr="//group[@name='active_group']" position="after">
+                <group string="KPI Performance" name="kpi_performance_group" groups="kpi_tracking.group_kpi_user,kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin">
+                    <field name="total_kpi_achievement" widget="progressbar" readonly="1"/>
+                    <field name="kpi_score_label" widget="badge" options="{'color_field': 'kpi_score_color'}" readonly="1"/>
+                    <field name="kpi_score_color" invisible="1"/>
+                </group>
+            </xpath>
+            
+            <!-- Add KPI Management buttons in the header -->
+            <xpath expr="//header" position="inside">
+                <button name="action_view_employee_kpis" 
+                        string="View KPIs" 
+                        type="object" 
+                        class="oe_highlight"
+                        groups="kpi_tracking.group_kpi_user,kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin"/>
+                <button name="action_view_kpi_submissions" 
+                        string="KPI History" 
+                        type="object"
+                        groups="kpi_tracking.group_kpi_user,kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin"/>
+                <button name="action_create_kpi_discussion" 
+                        string="Start KPI Discussion" 
+                        type="object"
+                        groups="kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Add KPI tab to employee form -->
+    <record id="hr_employee_view_form_kpi_notebook" model="ir.ui.view">
+        <field name="name">hr.employee.form.kpi.notebook</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="KPI Performance" name="kpi_performance" groups="kpi_tracking.group_kpi_user,kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin">
+                    <group>
+                        <group string="Performance Summary">
+                            <field name="kpi_count" readonly="1"/>
+                            <field name="total_kpi_achievement" widget="progressbar" readonly="1"/>
+                            <field name="kpi_score_label" widget="badge" options="{'color_field': 'kpi_score_color'}" readonly="1"/>
+                            <field name="kpi_score_color" invisible="1"/>
+                        </group>
+                        <group string="Quick Actions">
+                            <button name="action_view_employee_kpis" 
+                                    string="View All KPIs" 
+                                    type="object" 
+                                    class="btn-primary"
+                                    icon="fa-line-chart"/>
+                            <button name="action_view_kpi_submissions" 
+                                    string="View Submission History" 
+                                    type="object"
+                                    class="btn-secondary"
+                                    icon="fa-history"/>
+                            <button name="action_create_kpi_discussion" 
+                                    string="Start Performance Discussion" 
+                                    type="object"
+                                    class="btn-secondary"
+                                    icon="fa-comments"
+                                    groups="kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin"/>
+                        </group>
+                    </group>
+                    
+                    <separator string="Assigned KPIs"/>
+                    <field name="assigned_kpi_ids" readonly="1">
+                        <tree decoration-success="achievement_percent &gt; 95"
+                              decoration-info="achievement_percent &gt; 80 and achievement_percent &lt;= 95"
+                              decoration-warning="achievement_percent &gt; 50 and achievement_percent &lt;= 80"
+                              decoration-danger="achievement_percent &lt;= 50">
+                            <field name="name"/>
+                            <field name="report_id"/>
+                            <field name="department"/>
+                            <field name="kpi_type"/>
+                            <field name="target_unit_display"/>
+                            <field name="value"/>
+                            <field name="achievement_percent" widget="progressbar"/>
+                            <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>
+                            <field name="score_color" invisible="1"/>
+                            <field name="last_submitted"/>
+                        </tree>
+                    </field>
+                    
+                    <separator string="Recent KPI Submissions (Last 30 Days)"/>
+                    <field name="recent_kpi_submissions" readonly="1">
+                        <tree>
+                            <field name="date"/>
+                            <field name="kpi_id"/>
+                            <field name="value"/>
+                            <field name="achievement_percent" widget="progressbar"/>
+                            <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>
+                            <field name="score_color" invisible="1"/>
+                            <field name="note"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Employee Tree View Extension -->
+    <record id="hr_employee_view_tree_kpi" model="ir.ui.view">
+        <field name="name">hr.employee.tree.kpi</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='department_id']" position="after">
+                <field name="kpi_count" string="KPIs" groups="kpi_tracking.group_kpi_user,kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin"/>
+                <field name="total_kpi_achievement" widget="progressbar" string="KPI Achievement" groups="kpi_tracking.group_kpi_user,kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin"/>
+                <field name="kpi_score_label" widget="badge" options="{'color_field': 'kpi_score_color'}" string="Performance" groups="kpi_tracking.group_kpi_user,kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin"/>
+                <field name="kpi_score_color" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Employee Search View Extension -->
+    <record id="hr_employee_view_search_kpi" model="ir.ui.view">
+        <field name="name">hr.employee.search.kpi</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='inactive']" position="after">
+                <separator groups="kpi_tracking.group_kpi_user,kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin"/>
+                <filter string="Has User Account" name="has_user" domain="[('user_id', '!=', False)]" groups="kpi_tracking.group_kpi_user,kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin"/>
+                <separator groups="kpi_tracking.group_kpi_user,kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin"/>
+            </xpath>
+            <xpath expr="//group" position="inside">
+                <filter string="KPI Performance Level" name="group_by_kpi_performance" context="{'group_by': 'kpi_score_label'}" groups="kpi_tracking.group_kpi_user,kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Employee Kanban View Extension -->
+    <record id="hr_employee_view_kanban_kpi" model="ir.ui.view">
+        <field name="name">hr.employee.kanban.kpi</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.hr_kanban_view_employees"/>
+        <field name="arch" type="xml">
+            <!-- Add invisible fields for conditions -->
+            <xpath expr="//templates" position="before">
+                <field name="kpi_count"/>
+                <field name="total_kpi_achievement"/>
+                <field name="kpi_score_label"/>
+                <field name="kpi_score_color"/>
+            </xpath>
+            
+            <xpath expr="//div[hasclass('oe_kanban_details')]" position="inside">
+                <div class="row" t-if="record.kpi_count.value > 0" groups="kpi_tracking.group_kpi_user,kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin">
+                    <div class="col-12">
+                        <strong>KPIs:</strong> <t t-esc="record.kpi_count.value"/> | 
+                        <span class="badge badge-primary">
+                            <t t-esc="record.kpi_score_label.value"/>
+                        </span> | 
+                        <t t-esc="Math.round(record.total_kpi_achievement.value)"/>%
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Action for Employee KPI Overview -->
+    <record id="action_hr_employee_kpi" model="ir.actions.act_window">
+        <field name="name">Employee KPI Performance</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('user_id', '!=', False)]</field>
+        <field name="context">{
+            'search_default_has_user': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No employees found!
+            </p>
+            <p>
+                Employees with user accounts will appear here.
+                You can assign KPIs to employees through the KPI Reports section.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu item for Employee KPI Performance -->
+    <menuitem id="menu_hr_employee_kpi" 
+              name="Employee Performance" 
+              parent="kpi_tracking.menu_kpi_root" 
+              action="action_hr_employee_kpi" 
+              sequence="35"
+              groups="kpi_tracking.group_kpi_user,kpi_tracking.group_kpi_manager,kpi_tracking.group_kpi_admin"/>
+
+</odoo>

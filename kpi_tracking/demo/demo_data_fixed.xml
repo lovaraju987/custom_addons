@@ -34,6 +34,7 @@
             <field name="report_id" ref="demo_sales_kpi_group"/>
             <field name="department">sales</field>
             <field name="report_type">monthly</field>
+            <field name="assigned_user_ids" eval="[(6, 0, [ref('base.user_admin')])]"/>
         </record>
 
         <record id="demo_customer_satisfaction_kpi" model="kpi.report">
@@ -45,6 +46,7 @@
             <field name="report_id" ref="demo_sales_kpi_group"/>
             <field name="department">sales</field>
             <field name="report_type">monthly</field>
+            <field name="assigned_user_ids" eval="[(6, 0, [ref('base.user_admin')])]"/>
         </record>
 
         <record id="demo_lead_conversion_kpi" model="kpi.report">
@@ -56,6 +58,7 @@
             <field name="report_id" ref="demo_sales_kpi_group"/>
             <field name="department">sales</field>
             <field name="report_type">monthly</field>
+            <field name="assigned_user_ids" eval="[(6, 0, [ref('base.user_admin')])]"/>
         </record>
 
         <record id="demo_employee_satisfaction_kpi" model="kpi.report">
