@@ -122,7 +122,8 @@ class KPIReport(models.Model):
     report_type = fields.Selection([
         ('daily', 'Daily'),
         ('weekly', 'Weekly'),
-        ('monthly', 'Monthly')
+        ('monthly', 'Monthly'),
+        ('yearly', 'Yearly')
     ], string='Report Type')
     department = fields.Selection([
         ('sales', 'Sales'),
@@ -141,6 +142,15 @@ class KPIReport(models.Model):
     def _onchange_report_id(self):
         if self.report_id and self.report_id.department:
             self.department = self.report_id.department
+        if self.report_id and self.report_id.group_type:
+            # Map group_type to report_type
+            group_to_report_mapping = {
+                'daily': 'daily',
+                'weekly': 'weekly', 
+                'monthly': 'monthly',
+                'yearly': 'yearly'
+            }
+            self.report_type = group_to_report_mapping.get(self.report_id.group_type, 'daily')
 
     manual_value = fields.Float(string="Manual Input Value")
     value = fields.Float(string='Latest Value', readonly=True)

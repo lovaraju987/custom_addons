@@ -19,6 +19,7 @@
                     </group>
                     <group>
                         <field name="name"/>
+                        <field name="group_type"/>
                         <field name="department"/>
                         <field name="assigned_employee_ids" widget="many2many_tags" options="{'no_create': True}"/>
                         <field name="description"/>
@@ -88,6 +89,42 @@
                     </notebook>
                 </sheet>
             </form>
+        </field>
+    </record>
+
+    <record id="view_kpi_report_group_tree" model="ir.ui.view">
+        <field name="name">kpi.report.group.tree</field>
+        <field name="model">kpi.report.group</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="group_type"/>
+                <field name="department"/>
+                <field name="group_achievement_percent" widget="progressbar"/>
+                <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>
+                <field name="score_color" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_kpi_report_group_search" model="ir.ui.view">
+        <field name="name">kpi.report.group.search</field>
+        <field name="model">kpi.report.group</field>
+        <field name="arch" type="xml">
+            <search string="Search Report Groups">
+                <field name="name"/>
+                <field name="group_type"/>
+                <field name="department"/>
+                <filter string="Daily Groups" name="daily" domain="[('group_type', '=', 'daily')]"/>
+                <filter string="Weekly Groups" name="weekly" domain="[('group_type', '=', 'weekly')]"/>
+                <filter string="Monthly Groups" name="monthly" domain="[('group_type', '=', 'monthly')]"/>
+                <filter string="Yearly Groups" name="yearly" domain="[('group_type', '=', 'yearly')]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter string="Group Type" name="group_by_type" context="{'group_by': 'group_type'}"/>
+                    <filter string="Department" name="group_by_department" context="{'group_by': 'department'}"/>
+                </group>
+            </search>
         </field>
     </record>
 

@@ -12,6 +12,13 @@ class KPIReportGroup(models.Model):
 
     name = fields.Char(string='Report Name', required=True)
     description = fields.Text()
+    group_type = fields.Selection([
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+        ('yearly', 'Yearly')
+    ], string='Group Type', default='daily', required=True, 
+       help="Defines the reporting frequency for this KPI group")
     kpi_ids = fields.One2many('kpi.report', 'report_id', string="KPIs")
     submission_ids = fields.One2many('kpi.report.submission', 'report_id', string="All Submissions")
     assigned_employee_ids = fields.Many2many('hr.employee', string="Assigned Employees")

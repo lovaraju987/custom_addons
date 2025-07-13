@@ -5,32 +5,23 @@
         <!-- Demo KPI Report Groups -->
         <record id="demo_sales_kpi_group" model="kpi.report.group">
             <field name="name">Sales Performance</field>
+            <field name="group_type">monthly</field>
             <field name="department">sales</field>
             <field name="description">Track sales targets, revenue, and customer acquisition metrics</field>
-            <field name="frequency">monthly</field>
-            <field name="start_date" eval="DateTime.today().replace(day=1)"/>
-            <field name="end_date" eval="DateTime.today().replace(day=28)"/>
-            <field name="user_id" ref="base.user_admin"/>
         </record>
 
         <record id="demo_hr_kpi_group" model="kpi.report.group">
             <field name="name">HR Performance</field>
+            <field name="group_type">weekly</field>
             <field name="department">hr</field>
             <field name="description">Monitor employee satisfaction, training completion, and retention metrics</field>
-            <field name="frequency">quarterly</field>
-            <field name="start_date" eval="DateTime.today().replace(day=1)"/>
-            <field name="end_date" eval="DateTime.today().replace(day=28)"/>
-            <field name="user_id" ref="base.user_admin"/>
         </record>
 
         <record id="demo_operations_kpi_group" model="kpi.report.group">
             <field name="name">Operations Efficiency</field>
+            <field name="group_type">daily</field>
             <field name="department">operations</field>
             <field name="description">Track operational efficiency, cost reduction, and process optimization</field>
-            <field name="frequency">weekly</field>
-            <field name="start_date" eval="DateTime.today().replace(day=1)"/>
-            <field name="end_date" eval="DateTime.today().replace(day=28)"/>
-            <field name="user_id" ref="base.user_admin"/>
         </record>
 
         <!-- Demo KPI Reports -->
