@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- KPI Performance Coaching Views -->
+    <record id="view_kpi_performance_coaching_form" model="ir.ui.view">
+        <field name="name">kpi.performance.coaching.form</field>
+        <field name="model">kpi.performance.coaching</field>
+        <field name="arch" type="xml">
+            <form string="KPI Performance Coaching">
+                <header>
+                    <button name="action_start_session" type="object" string="Start Session" 
+                            class="oe_highlight" invisible="state != 'scheduled'"/>
+                    <button name="action_complete_session" type="object" string="Complete Session" 
+                            class="oe_highlight" invisible="state != 'in_progress'"/>
+                    <button name="action_cancel_session" type="object" string="Cancel Session" 
+                            invisible="state not in ['scheduled', 'in_progress']"/>
+                    <button name="action_reschedule_session" type="object" string="Reschedule" 
+                            invisible="state != 'scheduled'"/>
+                    <button name="action_create_follow_up" type="object" string="Create Follow-up" 
+                            invisible="state != 'completed'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="scheduled,in_progress,completed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_goals" icon="fa-bullseye">
+                            <field string="Goals" name="goals_count" widget="statinfo"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" name="action_view_completed_goals" icon="fa-check-circle">
+                            <field string="Completed" name="completed_goals" widget="statinfo"/>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="title" placeholder="Coaching Session Title"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="kpi_id" options="{'no_create': True}"/>
+                            <field name="employee_id"/>
+                            <field name="manager_id"/>
+                            <field name="coaching_type"/>
+                        </group>
+                        <group>
+                            <field name="session_date"/>
+                            <field name="duration_hours"/>
+                            <field name="follow_up_frequency"/>
+                            <field name="next_review_date"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Performance Context">
+                        <group>
+                            <field name="current_performance" widget="percentage"/>
+                            <field name="target_performance" widget="percentage"/>
+                            <field name="performance_gap" widget="percentage"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Session Planning">
+                            <group>
+                                <field name="session_agenda" placeholder="Session agenda and objectives..."/>
+                            </group>
+                            <group>
+                                <field name="previous_coaching_id"/>
+                                <field name="progress_since_last" placeholder="Progress since last coaching session..." 
+                                       invisible="not previous_coaching_id"/>
+                            </group>
+                        </page>
+                        
+                        <page string="Performance Analysis">
+                            <group>
+                                <field name="performance_analysis" placeholder="Detailed performance analysis..."/>
+                            </group>
+                            <group>
+                                <field name="strengths_identified" placeholder="Strengths and positive aspects identified..."/>
+                            </group>
+                            <group>
+                                <field name="improvement_areas" placeholder="Areas that need improvement..."/>
+                            </group>
+                        </page>
+                        
+                        <page string="Feedback Exchange">
+                            <group>
+                                <field name="manager_feedback" placeholder="Manager's feedback and observations..."/>
+                            </group>
+                            <group>
+                                <field name="employee_response" placeholder="Employee's response and self-assessment..."/>
+                            </group>
+                            <group>
+                                <field name="employee_concerns" placeholder="Employee's concerns, questions, or challenges..."/>
+                            </group>
+                        </page>
+                        
+                        <page string="Development Planning">
+                            <group>
+                                <field name="development_goals" placeholder="Development goals and objectives..."/>
+                            </group>
+                            <group>
+                                <field name="action_plan" placeholder="Detailed action plan..."/>
+                            </group>
+                            <group>
+                                <field name="resources_needed" placeholder="Resources and support needed..."/>
+                            </group>
+                            <group>
+                                <field name="success_metrics" placeholder="How to measure success..."/>
+                            </group>
+                        </page>
+                        
+                        <page string="Coaching Goals">
+                            <field name="goal_ids">
+                                <tree editable="bottom">
+                                    <field name="description"/>
+                                    <field name="goal_type"/>
+                                    <field name="priority" widget="priority"/>
+                                    <field name="target_date"/>
+                                    <field name="status" widget="badge" 
+                                           decoration-success="status == 'achieved'"
+                                           decoration-info="status == 'in_progress'"
+                                           decoration-muted="status == 'cancelled'"
+                                           decoration-warning="status == 'not_achieved'"/>
+                                    <field name="progress_percent" widget="percentage"/>
+                                </tree>
+                                <form>
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="description"/>
+                                                <field name="goal_type"/>
+                                                <field name="priority" widget="priority"/>
+                                                <field name="status"/>
+                                            </group>
+                                            <group>
+                                                <field name="start_date"/>
+                                                <field name="target_date"/>
+                                                <field name="achieved_date" invisible="status != 'achieved'"/>
+                                                <field name="progress_percent" widget="percentage"/>
+                                            </group>
+                                        </group>
+                                        <group>
+                                            <field name="detailed_plan" placeholder="Detailed plan to achieve this goal..."/>
+                                        </group>
+                                        <group>
+                                            <field name="success_criteria" placeholder="Success criteria and measurement..."/>
+                                            <field name="measurement_method" placeholder="How to measure progress..."/>
+                                        </group>
+                                        <group>
+                                            <field name="resources_required" placeholder="Resources required..."/>
+                                            <field name="support_needed" placeholder="Support needed..."/>
+                                            <field name="obstacles" placeholder="Potential obstacles..."/>
+                                        </group>
+                                        <group invisible="status not in ['achieved', 'partially_achieved', 'not_achieved']">
+                                            <field name="achievement_notes" placeholder="Achievement notes and results..."/>
+                                            <field name="lessons_learned" placeholder="Lessons learned..."/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+                        
+                        <page string="Session Evaluation" invisible="state != 'completed'">
+                            <group>
+                                <group>
+                                    <field name="employee_satisfaction" widget="priority"/>
+                                    <field name="coaching_effectiveness" widget="priority"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kpi_performance_coaching_tree" model="ir.ui.view">
+        <field name="name">kpi.performance.coaching.tree</field>
+        <field name="model">kpi.performance.coaching</field>
+        <field name="arch" type="xml">
+            <tree string="KPI Performance Coaching">
+                <field name="title"/>
+                <field name="kpi_name"/>
+                <field name="employee_name"/>
+                <field name="manager_name"/>
+                <field name="coaching_type"/>
+                <field name="session_date"/>
+                <field name="duration_hours"/>
+                <field name="state" widget="badge" 
+                       decoration-success="state == 'completed'"
+                       decoration-info="state == 'in_progress'"
+                       decoration-muted="state == 'cancelled'"
+                       decoration-warning="state == 'rescheduled'"/>
+                <field name="performance_gap" widget="percentage"/>
+                <field name="goals_count"/>
+                <field name="completed_goals"/>
+                <field name="next_review_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_kpi_performance_coaching_search" model="ir.ui.view">
+        <field name="name">kpi.performance.coaching.search</field>
+        <field name="model">kpi.performance.coaching</field>
+        <field name="arch" type="xml">
+            <search string="Search Performance Coaching">
+                <field name="title"/>
+                <field name="kpi_id"/>
+                <field name="employee_id"/>
+                <field name="manager_id"/>
+                <field name="coaching_type"/>
+                <filter string="My Coaching Sessions (as Employee)" name="my_employee_sessions" 
+                        domain="[('employee_id.user_id', '=', uid)]"/>
+                <filter string="My Coaching Sessions (as Manager)" name="my_manager_sessions" 
+                        domain="[('manager_id.user_id', '=', uid)]"/>
+                <filter string="Scheduled" name="scheduled" domain="[('state', '=', 'scheduled')]"/>
+                <filter string="In Progress" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Completed" name="completed" domain="[('state', '=', 'completed')]"/>
+                <separator/>
+                <filter string="This Week" name="this_week" 
+                        domain="[('session_date', '&gt;=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')),
+                                 ('session_date', '&lt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Next Week" name="next_week" 
+                        domain="[('session_date', '&gt;', context_today().strftime('%Y-%m-%d')),
+                                 ('session_date', '&lt;=', (context_today() + datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Review Due" name="review_due" 
+                        domain="[('next_review_date', '&lt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter string="Improvement Plans" name="improvement_plans" 
+                        domain="[('coaching_type', '=', 'improvement_plan')]"/>
+                <filter string="Skill Development" name="skill_development" 
+                        domain="[('coaching_type', '=', 'skill_development')]"/>
+                <filter string="Mentoring" name="mentoring" 
+                        domain="[('coaching_type', '=', 'mentoring_session')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="KPI" name="group_kpi" context="{'group_by': 'kpi_id'}"/>
+                    <filter string="Employee" name="group_employee" context="{'group_by': 'employee_id'}"/>
+                    <filter string="Manager" name="group_manager" context="{'group_by': 'manager_id'}"/>
+                    <filter string="Coaching Type" name="group_type" context="{'group_by': 'coaching_type'}"/>
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Department" name="group_department" context="{'group_by': 'department'}"/>
+                    <filter string="Session Date" name="group_session_date" context="{'group_by': 'session_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- KPI Coaching Goal Views -->
+    <record id="view_kpi_coaching_goal_form" model="ir.ui.view">
+        <field name="name">kpi.coaching.goal.form</field>
+        <field name="model">kpi.coaching.goal</field>
+        <field name="arch" type="xml">
+            <form string="Coaching Goal">
+                <header>
+                    <button name="action_start_goal" type="object" string="Start Goal" 
+                            class="oe_highlight" invisible="status != 'not_started'"/>
+                    <button name="action_achieve_goal" type="object" string="Mark Achieved" 
+                            class="oe_highlight" invisible="status not in ['not_started', 'in_progress']"/>
+                    <button name="action_partially_achieve_goal" type="object" string="Partially Achieved" 
+                            invisible="status not in ['not_started', 'in_progress']"/>
+                    <button name="action_not_achieve_goal" type="object" string="Not Achieved" 
+                            invisible="status not in ['not_started', 'in_progress']"/>
+                    <button name="action_cancel_goal" type="object" string="Cancel Goal" 
+                            invisible="status in ['achieved', 'cancelled']"/>
+                    <field name="status" widget="statusbar" statusbar_visible="not_started,in_progress,achieved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="description" placeholder="Goal Description"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="coaching_id"/>
+                            <field name="goal_type"/>
+                            <field name="priority" widget="priority"/>
+                        </group>
+                        <group>
+                            <field name="start_date"/>
+                            <field name="target_date"/>
+                            <field name="achieved_date" invisible="status != 'achieved'"/>
+                            <field name="progress_percent" widget="percentage"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Goal Details">
+                            <group>
+                                <field name="detailed_plan" placeholder="Detailed plan to achieve this goal..."/>
+                            </group>
+                        </page>
+                        
+                        <page string="Success Criteria">
+                            <group>
+                                <field name="success_criteria" placeholder="What does success look like?"/>
+                            </group>
+                            <group>
+                                <field name="measurement_method" placeholder="How will progress be measured?"/>
+                            </group>
+                        </page>
+                        
+                        <page string="Resources &amp; Support">
+                            <group>
+                                <field name="resources_required" placeholder="What resources are needed?"/>
+                            </group>
+                            <group>
+                                <field name="support_needed" placeholder="What support is needed?"/>
+                            </group>
+                            <group>
+                                <field name="obstacles" placeholder="What potential obstacles might arise?"/>
+                            </group>
+                        </page>
+                        
+                        <page string="Results" invisible="status not in ['achieved', 'partially_achieved', 'not_achieved']">
+                            <group>
+                                <field name="achievement_notes" placeholder="Achievement notes and results..."/>
+                            </group>
+                            <group>
+                                <field name="lessons_learned" placeholder="What was learned from this goal?"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kpi_coaching_goal_tree" model="ir.ui.view">
+        <field name="name">kpi.coaching.goal.tree</field>
+        <field name="model">kpi.coaching.goal</field>
+        <field name="arch" type="xml">
+            <tree string="Coaching Goals">
+                <field name="description"/>
+                <field name="coaching_id"/>
+                <field name="goal_type"/>
+                <field name="priority" widget="priority"/>
+                <field name="target_date"/>
+                <field name="status" widget="badge" 
+                       decoration-success="status == 'achieved'"
+                       decoration-info="status == 'in_progress'"
+                       decoration-muted="status == 'cancelled'"
+                       decoration-warning="status == 'not_achieved'"/>
+                <field name="progress_percent" widget="percentage"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- KPI Coaching Template Views -->
+    <record id="view_kpi_coaching_template_form" model="ir.ui.view">
+        <field name="name">kpi.coaching.template.form</field>
+        <field name="model">kpi.coaching.template</field>
+        <field name="arch" type="xml">
+            <form string="Coaching Template">
+                <header>
+                    <button name="action_use_template" type="object" string="Use Template" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-users">
+                            <field string="Times Used" name="usage_count" widget="statinfo"/>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Template Name"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="coaching_type"/>
+                            <field name="department"/>
+                            <field name="duration_hours"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Agenda Template">
+                            <field name="agenda_template" placeholder="Standard agenda template..."/>
+                        </page>
+                        
+                        <page string="Discussion Questions">
+                            <field name="questions_template" placeholder="Standard discussion questions..."/>
+                        </page>
+                        
+                        <page string="Goals Template">
+                            <field name="goals_template" placeholder="Standard goals template..."/>
+                        </page>
+                        
+                        <page string="Action Plan Template">
+                            <field name="action_plan_template" placeholder="Standard action plan template..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kpi_coaching_template_tree" model="ir.ui.view">
+        <field name="name">kpi.coaching.template.tree</field>
+        <field name="model">kpi.coaching.template</field>
+        <field name="arch" type="xml">
+            <tree string="Coaching Templates">
+                <field name="name"/>
+                <field name="coaching_type"/>
+                <field name="department"/>
+                <field name="duration_hours"/>
+                <field name="usage_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_kpi_performance_coaching" model="ir.actions.act_window">
+        <field name="name">Performance Coaching</field>
+        <field name="res_model">kpi.performance.coaching</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_my_employee_sessions': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No coaching sessions yet!
+            </p>
+            <p>
+                Create coaching sessions to provide feedback, develop skills, and improve KPI performance.
+                Coaching sessions help build capabilities and achieve performance goals.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_kpi_coaching_goal" model="ir.actions.act_window">
+        <field name="name">Coaching Goals</field>
+        <field name="res_model">kpi.coaching.goal</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No coaching goals yet!
+            </p>
+            <p>
+                Coaching goals are specific objectives set during coaching sessions to improve performance and develop skills.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_kpi_coaching_template" model="ir.actions.act_window">
+        <field name="name">Coaching Templates</field>
+        <field name="res_model">kpi.coaching.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No coaching templates yet!
+            </p>
+            <p>
+                Create templates to standardize coaching sessions and ensure consistent quality across different types of coaching.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_kpi_performance_coaching" name="Performance Coaching" parent="menu_kpi_collaboration" 
+              action="action_kpi_performance_coaching" sequence="50"/>
+    
+    <menuitem id="menu_kpi_coaching_goal" name="Coaching Goals" parent="menu_kpi_collaboration" 
+              action="action_kpi_coaching_goal" sequence="60"/>
+    
+    <menuitem id="menu_kpi_coaching_template" name="Coaching Templates" parent="menu_kpi_collaboration" 
+              action="action_kpi_coaching_template" sequence="70"/>
+
+</odoo>

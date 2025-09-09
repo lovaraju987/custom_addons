@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- KPI Approval Workflow Views -->
+    <record id="view_kpi_approval_workflow_form" model="ir.ui.view">
+        <field name="name">kpi.approval.workflow.form</field>
+        <field name="model">kpi.approval.workflow</field>
+        <field name="arch" type="xml">
+            <form string="KPI Approval Workflow">
+                <header>
+                    <button name="action_submit_for_approval" type="object" string="Submit for Approval" 
+                            class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="Approve" 
+                            class="oe_highlight" invisible="state not in ['submitted', 'under_review'] or next_approver_id != uid"/>
+                    <button name="action_reject" type="object" string="Reject" 
+                            invisible="state not in ['submitted', 'under_review'] or next_approver_id != uid"/>
+                    <button name="action_cancel" type="object" string="Cancel" 
+                            invisible="state not in ['draft', 'submitted', 'under_review']"/>
+                    <button name="action_implement_changes" type="object" string="Implement Changes" 
+                            class="oe_highlight" invisible="state != 'approved'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,under_review,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Workflow Name"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="kpi_id" options="{'no_create': True}"/>
+                            <field name="workflow_type"/>
+                            <field name="priority" widget="priority"/>
+                            <field name="requested_by_id"/>
+                            <field name="request_date"/>
+                        </group>
+                        <group>
+                            <field name="approval_levels"/>
+                            <field name="current_approval_level"/>
+                            <field name="next_approver_id"/>
+                            <field name="auto_approve_threshold" invisible="workflow_type != 'target_change'"/>
+                            <field name="escalation_timeout"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Request Details">
+                            <group>
+                                <field name="request_reason" placeholder="Reason for this request..."/>
+                            </group>
+                            
+                            <!-- Target Change specific fields -->
+                            <group string="Target Value Changes" invisible="workflow_type != 'target_change'">
+                                <group>
+                                    <field name="current_target_value"/>
+                                    <field name="proposed_target_value"/>
+                                </group>
+                            </group>
+                            
+                            <!-- Formula Modification specific fields -->
+                            <group string="Formula Changes" invisible="workflow_type != 'formula_modification'">
+                                <field name="current_formula"/>
+                                <field name="proposed_formula"/>
+                            </group>
+                            
+                            <!-- Below Threshold specific fields -->
+                            <group string="Performance Justification" invisible="workflow_type != 'below_threshold'">
+                                <group>
+                                    <field name="current_achievement"/>
+                                    <field name="threshold_value"/>
+                                </group>
+                                <field name="justification" placeholder="Justification for below threshold performance..."/>
+                            </group>
+                        </page>
+                        
+                        <page string="Approval Process">
+                            <field name="approval_line_ids">
+                                <tree decoration-success="status == 'approved'" decoration-danger="status == 'rejected'">
+                                    <field name="approval_level"/>
+                                    <field name="approver_id"/>
+                                    <field name="status" widget="badge"/>
+                                    <field name="approval_date"/>
+                                    <field name="response_time_hours"/>
+                                    <field name="comments"/>
+                                </tree>
+                                <form>
+                                    <group>
+                                        <group>
+                                            <field name="approval_level"/>
+                                            <field name="approver_id"/>
+                                            <field name="status"/>
+                                        </group>
+                                        <group>
+                                            <field name="assigned_date"/>
+                                            <field name="approval_date"/>
+                                            <field name="response_time_hours"/>
+                                        </group>
+                                    </group>
+                                    <group>
+                                        <field name="comments" placeholder="Approver comments..."/>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                        
+                        <page string="Implementation" invisible="state not in ['approved', 'rejected']">
+                            <group invisible="state != 'approved'">
+                                <group>
+                                    <field name="final_approver_id"/>
+                                    <field name="approval_date"/>
+                                    <field name="implementation_date"/>
+                                    <field name="implemented_by_id"/>
+                                </group>
+                                <field name="implementation_notes" placeholder="Implementation notes and details..."/>
+                            </group>
+                            
+                            <group invisible="state != 'rejected'">
+                                <field name="rejection_reason"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kpi_approval_workflow_tree" model="ir.ui.view">
+        <field name="name">kpi.approval.workflow.tree</field>
+        <field name="model">kpi.approval.workflow</field>
+        <field name="arch" type="xml">
+            <tree string="KPI Approval Workflows">
+                <field name="name"/>
+                <field name="kpi_name"/>
+                <field name="workflow_type"/>
+                <field name="requested_by_id"/>
+                <field name="priority" widget="priority"/>
+                <field name="state" widget="badge" 
+                       decoration-success="state == 'approved'"
+                       decoration-info="state in ['submitted', 'under_review']"
+                       decoration-danger="state == 'rejected'"
+                       decoration-muted="state == 'cancelled'"/>
+                <field name="current_approval_level"/>
+                <field name="approval_levels"/>
+                <field name="next_approver_id"/>
+                <field name="request_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_kpi_approval_workflow_search" model="ir.ui.view">
+        <field name="name">kpi.approval.workflow.search</field>
+        <field name="model">kpi.approval.workflow</field>
+        <field name="arch" type="xml">
+            <search string="Search Approval Workflows">
+                <field name="name"/>
+                <field name="kpi_id"/>
+                <field name="workflow_type"/>
+                <field name="requested_by_id"/>
+                <filter string="My Requests" name="my_requests" domain="[('requested_by_id', '=', uid)]"/>
+                <filter string="Pending My Approval" name="pending_approval" domain="[('approval_line_ids.approver_id', '=', uid), ('approval_line_ids.status', '=', 'pending')]"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Submitted" name="submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter string="Under Review" name="under_review" domain="[('state', '=', 'under_review')]"/>
+                <filter string="Approved" name="approved" domain="[('state', '=', 'approved')]"/>
+                <filter string="Rejected" name="rejected" domain="[('state', '=', 'rejected')]"/>
+                <separator/>
+                <filter string="High Priority" name="high_priority" domain="[('priority', 'in', ['2', '3'])]"/>
+                <filter string="Target Changes" name="target_changes" domain="[('workflow_type', '=', 'target_change')]"/>
+                <filter string="Formula Changes" name="formula_changes" domain="[('workflow_type', '=', 'formula_modification')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="KPI" name="group_kpi" context="{'group_by': 'kpi_id'}"/>
+                    <filter string="Workflow Type" name="group_type" context="{'group_by': 'workflow_type'}"/>
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Department" name="group_department" context="{'group_by': 'department'}"/>
+                    <filter string="Requested By" name="group_requester" context="{'group_by': 'requested_by_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Rejection Wizard View -->
+    <record id="view_kpi_approval_rejection_wizard" model="ir.ui.view">
+        <field name="name">kpi.approval.rejection.wizard.form</field>
+        <field name="model">kpi.approval.rejection.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reject Approval Request">
+                <group>
+                    <field name="workflow_id" invisible="1"/>
+                    <field name="rejection_reason" placeholder="Please provide a reason for rejection..."/>
+                </group>
+                <footer>
+                    <button name="action_confirm_rejection" string="Confirm Rejection" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_kpi_approval_workflow" model="ir.actions.act_window">
+        <field name="name">KPI Approval Workflows</field>
+        <field name="res_model">kpi.approval.workflow</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_my_requests': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No approval workflows yet!
+            </p>
+            <p>
+                Create approval workflows for KPI changes, target modifications, or below-threshold justifications.
+                Workflows ensure proper authorization and documentation of KPI modifications.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_kpi_approval_pending" model="ir.actions.act_window">
+        <field name="name">Pending Approvals</field>
+        <field name="res_model">kpi.approval.workflow</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_pending_approval': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No pending approvals!
+            </p>
+            <p>
+                Here you'll see KPI approval workflows that require your approval.
+                Review the requests and approve or reject them as appropriate.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_kpi_approval_workflow" name="Approval Workflows" parent="menu_kpi_collaboration" 
+              action="action_kpi_approval_workflow" sequence="30"/>
+    
+    <menuitem id="menu_kpi_approval_pending" name="Pending Approvals" parent="menu_kpi_collaboration" 
+              action="action_kpi_approval_pending" sequence="40"/>
+
+</odoo>

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Demo Data for KPI Collaboration Features -->
+    
+    <!-- Demo KPI Discussions -->
+    <record id="demo_kpi_discussion_1" model="kpi.discussion">
+        <field name="title">Monthly Sales Target Review</field>
+        <field name="kpi_id" ref="demo_monthly_revenue_kpi"/>
+        <field name="discussion_type">performance_review</field>
+        <field name="priority">2</field>
+        <field name="state">active</field>
+        <field name="description">&lt;p&gt;Monthly sales KPI is currently at 85% of target. Need to discuss strategies to improve performance in remaining weeks.&lt;/p&gt;&lt;p&gt;Key areas to focus on:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Lead conversion improvement&lt;/li&gt;&lt;li&gt;Upselling existing customers&lt;/li&gt;&lt;li&gt;Territory optimization&lt;/li&gt;&lt;/ul&gt;</field>
+    </record>
+
+    <record id="demo_kpi_discussion_2" model="kpi.discussion">
+        <field name="title">HR Training Completion Strategy</field>
+        <field name="kpi_id" ref="demo_training_completion_kpi"/>
+        <field name="discussion_type">improvement_plan</field>
+        <field name="priority">1</field>
+        <field name="state">active</field>
+        <field name="description">&lt;p&gt;Training completion rates are below target. Let's develop an action plan to improve engagement and completion rates.&lt;/p&gt;</field>
+    </record>
+
+    <!-- Demo Action Items -->
+    <record id="demo_action_item_1" model="kpi.action.item">
+        <field name="discussion_id" ref="demo_kpi_discussion_1"/>
+        <field name="description">Implement weekly sales pipeline review meetings</field>
+        <field name="detailed_plan">&lt;p&gt;Set up weekly 30-minute meetings with sales team to review:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Pipeline health&lt;/li&gt;&lt;li&gt;Stuck deals&lt;/li&gt;&lt;li&gt;Opportunity priorities&lt;/li&gt;&lt;li&gt;Resource needs&lt;/li&gt;&lt;/ul&gt;</field>
+        <field name="assigned_to_id" ref="base.user_admin"/>
+        <field name="due_date" eval="(DateTime.now() + timedelta(days=7)).strftime('%Y-%m-%d')"/>
+        <field name="priority">2</field>
+        <field name="status">in_progress</field>
+        <field name="estimated_hours">4</field>
+        <field name="progress_percent">30</field>
+    </record>
+
+    <record id="demo_action_item_2" model="kpi.action.item">
+        <field name="discussion_id" ref="demo_kpi_discussion_1"/>
+        <field name="description">Create upselling training program</field>
+        <field name="detailed_plan">&lt;p&gt;Develop and deliver training on upselling techniques:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Identify upsell opportunities&lt;/li&gt;&lt;li&gt;Customer needs assessment&lt;/li&gt;&lt;li&gt;Value proposition development&lt;/li&gt;&lt;li&gt;Objection handling&lt;/li&gt;&lt;/ul&gt;</field>
+        <field name="assigned_to_id" ref="base.user_admin"/>
+        <field name="due_date" eval="(DateTime.now() + timedelta(days=14)).strftime('%Y-%m-%d')"/>
+        <field name="priority">1</field>
+        <field name="status">open</field>
+        <field name="estimated_hours">16</field>
+    </record>
+
+    <record id="demo_action_item_3" model="kpi.action.item">
+        <field name="discussion_id" ref="demo_kpi_discussion_2"/>
+        <field name="description">Implement gamification for training completion</field>
+        <field name="detailed_plan">&lt;p&gt;Add gamification elements to boost training engagement:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Progress badges&lt;/li&gt;&lt;li&gt;Completion leaderboards&lt;/li&gt;&lt;li&gt;Team challenges&lt;/li&gt;&lt;li&gt;Completion rewards&lt;/li&gt;&lt;/ul&gt;</field>
+        <field name="assigned_to_id" ref="base.user_admin"/>
+        <field name="due_date" eval="(DateTime.now() + timedelta(days=21)).strftime('%Y-%m-%d')"/>
+        <field name="priority">1</field>
+        <field name="status">open</field>
+        <field name="estimated_hours">12</field>
+    </record>
+
+    <!-- Demo Approval Workflows -->
+    <record id="demo_approval_workflow_1" model="kpi.approval.workflow">
+        <field name="name">Sales Target Adjustment Request</field>
+        <field name="kpi_id" ref="kpi_tracking.demo_kpi_sales_monthly"/>
+        <field name="workflow_type">target_change</field>
+        <field name="priority">1</field>
+        <field name="state">submitted</field>
+        <field name="current_target_value">100000</field>
+        <field name="proposed_target_value">120000</field>
+        <field name="request_reason">&lt;p&gt;Market conditions have improved significantly this quarter. Our sales team has consistently exceeded targets, and we have new product launches planned.&lt;/p&gt;&lt;p&gt;Requesting target increase to better reflect current market potential and team capabilities.&lt;/p&gt;</field>
+        <field name="approval_levels">2</field>
+        <field name="current_approval_level">1</field>
+    </record>
+
+    <record id="demo_approval_workflow_2" model="kpi.approval.workflow">
+        <field name="name">Below Threshold Justification - Training KPI</field>
+        <field name="kpi_id" ref="kpi_tracking.demo_kpi_hr_training"/>
+        <field name="workflow_type">below_threshold</field>
+        <field name="priority">2</field>
+        <field name="state">under_review</field>
+        <field name="threshold_value">80</field>
+        <field name="justification">&lt;p&gt;Training completion rates are below threshold due to:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Seasonal business priorities taking precedence&lt;/li&gt;&lt;li&gt;Technical issues with training platform&lt;/li&gt;&lt;li&gt;Remote work challenges affecting engagement&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;Action plan implemented to address these issues.&lt;/p&gt;</field>
+        <field name="approval_levels">1</field>
+        <field name="current_approval_level">1</field>
+    </record>
+
+    <!-- Demo Performance Coaching Sessions -->
+    <record id="demo_coaching_session_1" model="kpi.performance.coaching">
+        <field name="title">Sales Performance Improvement Session</field>
+        <field name="kpi_id" ref="kpi_tracking.demo_kpi_sales_monthly"/>
+        <field name="employee_id" ref="hr.employee_admin"/>
+        <field name="manager_id" ref="hr.employee_admin"/>
+        <field name="coaching_type">improvement_plan</field>
+        <field name="session_date" eval="(DateTime.now() + timedelta(days=3)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="duration_hours">1.5</field>
+        <field name="state">scheduled</field>
+        <field name="target_performance">100</field>
+        <field name="session_agenda">&lt;p&gt;Coaching session agenda:&lt;/p&gt;&lt;ol&gt;&lt;li&gt;Review current performance (15 min)&lt;/li&gt;&lt;li&gt;Identify improvement opportunities (30 min)&lt;/li&gt;&lt;li&gt;Develop action plan (30 min)&lt;/li&gt;&lt;li&gt;Set follow-up schedule (15 min)&lt;/li&gt;&lt;/ol&gt;</field>
+        <field name="follow_up_frequency">biweekly</field>
+        <field name="next_review_date" eval="(DateTime.now() + timedelta(days=17)).strftime('%Y-%m-%d')"/>
+    </record>
+
+    <record id="demo_coaching_session_2" model="kpi.performance.coaching">
+        <field name="title">Training Engagement Mentoring</field>
+        <field name="kpi_id" ref="kpi_tracking.demo_kpi_hr_training"/>
+        <field name="employee_id" ref="hr.employee_admin"/>
+        <field name="manager_id" ref="hr.employee_admin"/>
+        <field name="coaching_type">mentoring_session</field>
+        <field name="session_date" eval="(DateTime.now() + timedelta(days=5)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="duration_hours">1</field>
+        <field name="state">scheduled</field>
+        <field name="target_performance">90</field>
+        <field name="session_agenda">&lt;p&gt;Mentoring focus areas:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Understanding training importance&lt;/li&gt;&lt;li&gt;Time management for learning&lt;/li&gt;&lt;li&gt;Overcoming learning obstacles&lt;/li&gt;&lt;li&gt;Setting learning goals&lt;/li&gt;&lt;/ul&gt;</field>
+        <field name="follow_up_frequency">monthly</field>
+    </record>
+
+    <!-- Demo Coaching Goals -->
+    <record id="demo_coaching_goal_1" model="kpi.coaching.goal">
+        <field name="coaching_id" ref="demo_coaching_session_1"/>
+        <field name="description">Improve sales conversation quality and conversion rate</field>
+        <field name="detailed_plan">&lt;p&gt;Focus on improving sales conversation quality through:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Better discovery questions&lt;/li&gt;&lt;li&gt;Active listening techniques&lt;/li&gt;&lt;li&gt;Value-based selling approach&lt;/li&gt;&lt;li&gt;Stronger closing techniques&lt;/li&gt;&lt;/ul&gt;</field>
+        <field name="goal_type">performance</field>
+        <field name="priority">3</field>
+        <field name="target_date" eval="(DateTime.now() + timedelta(days=30)).strftime('%Y-%m-%d')"/>
+        <field name="status">not_started</field>
+        <field name="success_criteria">&lt;p&gt;Success will be measured by:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;15% improvement in conversion rate&lt;/li&gt;&lt;li&gt;Positive customer feedback scores&lt;/li&gt;&lt;li&gt;Shorter sales cycle duration&lt;/li&gt;&lt;/ul&gt;</field>
+        <field name="measurement_method">Track conversion rates weekly and gather customer feedback monthly</field>
+    </record>
+
+    <record id="demo_coaching_goal_2" model="kpi.coaching.goal">
+        <field name="coaching_id" ref="demo_coaching_session_2"/>
+        <field name="description">Complete all mandatory training modules by month-end</field>
+        <field name="detailed_plan">&lt;p&gt;Create a structured plan to complete training:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Schedule 30 minutes daily for training&lt;/li&gt;&lt;li&gt;Complete 2 modules per week&lt;/li&gt;&lt;li&gt;Take notes and apply learnings immediately&lt;/li&gt;&lt;li&gt;Share insights with team&lt;/li&gt;&lt;/ul&gt;</field>
+        <field name="goal_type">knowledge</field>
+        <field name="priority">2</field>
+        <field name="target_date" eval="(DateTime.now() + timedelta(days=25)).strftime('%Y-%m-%d')"/>
+        <field name="status">in_progress</field>
+        <field name="progress_percent">40</field>
+        <field name="success_criteria">&lt;p&gt;100% completion of all mandatory training modules with passing scores&lt;/p&gt;</field>
+        <field name="measurement_method">Track completion percentage in learning management system</field>
+    </record>
+
+    <!-- Demo Coaching Templates -->
+    <record id="demo_coaching_template_1" model="kpi.coaching.template">
+        <field name="name">Sales Performance Improvement Template</field>
+        <field name="coaching_type">improvement_plan</field>
+        <field name="department">sales</field>
+        <field name="duration_hours">1.5</field>
+        <field name="agenda_template">&lt;p&gt;Standard Sales Performance Coaching Agenda:&lt;/p&gt;&lt;ol&gt;&lt;li&gt;Performance Review (20 min)&lt;ul&gt;&lt;li&gt;KPI achievement analysis&lt;/li&gt;&lt;li&gt;Strengths identification&lt;/li&gt;&lt;li&gt;Challenge areas discussion&lt;/li&gt;&lt;/ul&gt;&lt;/li&gt;&lt;li&gt;Skill Development (40 min)&lt;ul&gt;&lt;li&gt;Role-play exercises&lt;/li&gt;&lt;li&gt;Technique refinement&lt;/li&gt;&lt;li&gt;Best practice sharing&lt;/li&gt;&lt;/ul&gt;&lt;/li&gt;&lt;li&gt;Action Planning (25 min)&lt;ul&gt;&lt;li&gt;Goal setting&lt;/li&gt;&lt;li&gt;Resource allocation&lt;/li&gt;&lt;li&gt;Timeline establishment&lt;/li&gt;&lt;/ul&gt;&lt;/li&gt;&lt;li&gt;Follow-up Planning (5 min)&lt;/li&gt;&lt;/ol&gt;</field>
+        <field name="questions_template">&lt;p&gt;Key coaching questions:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;What's working well in your current approach?&lt;/li&gt;&lt;li&gt;Where do you see the biggest opportunities for improvement?&lt;/li&gt;&lt;li&gt;What obstacles are preventing you from reaching your targets?&lt;/li&gt;&lt;li&gt;What support or resources would help you most?&lt;/li&gt;&lt;li&gt;How can we measure progress effectively?&lt;/li&gt;&lt;/ul&gt;</field>
+        <field name="goals_template">&lt;p&gt;Standard goals for sales performance improvement:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Increase conversion rate by X%&lt;/li&gt;&lt;li&gt;Improve average deal size&lt;/li&gt;&lt;li&gt;Reduce sales cycle length&lt;/li&gt;&lt;li&gt;Enhance customer satisfaction scores&lt;/li&gt;&lt;li&gt;Develop new prospect sources&lt;/li&gt;&lt;/ul&gt;</field>
+        <field name="action_plan_template">&lt;p&gt;Action plan template:&lt;/p&gt;&lt;ol&gt;&lt;li&gt;Specific skill development activities&lt;/li&gt;&lt;li&gt;Daily/weekly practice commitments&lt;/li&gt;&lt;li&gt;Resource requirements&lt;/li&gt;&lt;li&gt;Progress measurement methods&lt;/li&gt;&lt;li&gt;Follow-up schedule&lt;/li&gt;&lt;li&gt;Support system activation&lt;/li&gt;&lt;/ol&gt;</field>
+    </record>
+
+    <record id="demo_coaching_template_2" model="kpi.coaching.template">
+        <field name="name">Training & Development Coaching Template</field>
+        <field name="coaching_type">skill_development</field>
+        <field name="department">hr</field>
+        <field name="duration_hours">1</field>
+        <field name="agenda_template">&lt;p&gt;Training & Development Coaching Agenda:&lt;/p&gt;&lt;ol&gt;&lt;li&gt;Learning Assessment (15 min)&lt;/li&gt;&lt;li&gt;Skill Gap Analysis (20 min)&lt;/li&gt;&lt;li&gt;Development Planning (20 min)&lt;/li&gt;&lt;li&gt;Resource Identification (5 min)&lt;/li&gt;&lt;/ol&gt;</field>
+        <field name="questions_template">&lt;p&gt;Development coaching questions:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;What new skills would most benefit your performance?&lt;/li&gt;&lt;li&gt;How do you prefer to learn new concepts?&lt;/li&gt;&lt;li&gt;What's preventing you from completing training?&lt;/li&gt;&lt;li&gt;How can we make learning more engaging for you?&lt;/li&gt;&lt;/ul&gt;</field>
+        <field name="goals_template">&lt;p&gt;Development goals:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Complete required training modules&lt;/li&gt;&lt;li&gt;Apply new skills in daily work&lt;/li&gt;&lt;li&gt;Share knowledge with colleagues&lt;/li&gt;&lt;li&gt;Seek feedback on skill application&lt;/li&gt;&lt;/ul&gt;</field>
+    </record>
+
+</odoo>

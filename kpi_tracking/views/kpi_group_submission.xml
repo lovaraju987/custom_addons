@@ -1,0 +1,28 @@
+<odoo>
+    <record id="view_kpi_group_submission_tree" model="ir.ui.view">
+        <field name="name">kpi.report.group.submission.list</field>
+        <field name="model">kpi.report.group.submission</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="value &gt; 95"
+                  decoration-warning="value &gt; 70 and value &lt; 95"
+                  decoration-danger="value &lt; 70">
+                <field name="date" string="Submitted On"/>                
+                <field name="report_id" string="Report Group"/>
+                <field name="user_id" string="Updated By"/>
+                <field name="value" string="Achievement %" widget="progressbar"/>  
+                <field name="score_label" widget="badge" options="{'color_field': 'score_color'}"/>  
+                <field name="score_color" invisible="1"/>
+                <field name="note"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_kpi_group_submission" model="ir.actions.act_window">
+        <field name="name">Group Submission History</field>
+        <field name="res_model">kpi.report.group.submission</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <menuitem id="menu_kpi_group_submission" name="Group History"
+              parent="menu_kpi_root" action="action_kpi_group_submission" sequence="60"/>
+</odoo>

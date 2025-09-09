@@ -329,8 +329,8 @@ class WebHook2(http.Controller):
                                     [('wa_message_id', '=',
                                       mes.get('context').get('id') if mes.get('context', False) else mes.get(
                                           'reaction').get('message_id'))],
-                                    ['id', 'chatter_wa_model', 'chatter_wa_res_id',
-                                     'chatter_wa_message_id'], limit=1)
+                                    ['id', 'body', 'chatter_wa_model', 'chatter_wa_res_id',
+                                     'chatter_wa_message_id'])
                                 if len(parent_message) > 0:
                                     message_values.update({'parent_id': parent_message[0]['id'],
                                                            'model': parent_message[0].get('chatter_wa_model') or 'discuss.channel',
