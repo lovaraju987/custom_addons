@@ -80,16 +80,16 @@ class Provider(models.Model):
         res = fn(self, mobile)
         return res
 
-    def add_template(self, name, language, category, components):
+    def add_template(self, name, language, category, sub_category, components):
         t = type(self)
         fn = getattr(t, f'{self.provider}_add_template', None)
-        res = fn(self, name, language, category, components)
+        res = fn(self, name, language, category, sub_category, components)
         return res
 
-    def resubmit_template(self, category, template_id, components):
+    def resubmit_template(self, category, template_id, sub_category, components):
         t = type(self)
         fn = getattr(t, f'{self.provider}_resubmit_template', None)
-        res = fn(self, category, template_id, components)
+        res = fn(self, category, template_id, sub_category, components)
         return res
 
     def remove_template(self, name):
@@ -568,15 +568,20 @@ class Provider(models.Model):
             parameters[0][doc_type].pop('filename')
         if doc_type == 'video':
             parameters[0][doc_type].pop('filename')
+        if not self._context.get('is_automated_action') or self._context.get('report_taken') :
+            self.env.cr.commit()
         return parameters or []
 
     def get_channel_whatsapp(self, partner, user):
         channel = self.env['discuss.channel'].sudo()
         if not partner or not user:
             return channel
-        provider_channel_id = partner.channel_provider_line_ids.filtered(lambda s: s.provider_id.id == self.id)
+        provider_channel_id = partner.sudo().channel_provider_line_ids.filtered(lambda s: s.provider_id.id == self.id)
         if provider_channel_id:
             channel |= provider_channel_id.channel_id
+            if channel:
+                if len(channel) > 1:
+                    channel = fields.first(channel.sorted(lambda x: x.create_date))
             if user.partner_id.id not in channel.channel_partner_ids.ids and user.has_group(
                     "base.group_user") and user.has_group("tus_meta_whatsapp_base.whatsapp_group_user"):
                 channel.sudo().write({"channel_partner_ids": [(4, user.partner_id.id)]})
@@ -588,6 +593,8 @@ class Provider(models.Model):
                     "name": name,
                     "whatsapp_channel": True,
                     "channel_partner_ids": [(4, partner.id)],
+                    "company_id": self.company_id.id,
+                    "provider_id" : self.id
                 }
             )
             if partner.id != user.partner_id.id:
@@ -609,6 +616,10 @@ class Provider(models.Model):
                 (0, 0, {"channel_id": channel.id, "provider_id": self.id})]})
         if channel:
             self._add_multi_agents(channel)
+        if not channel.company_id:
+            channel.company_id = self.company_id.id
+            channel.provider_id = self.id
+
         return channel
 
     def _add_multi_agents(self, channel):

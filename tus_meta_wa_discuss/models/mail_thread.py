@@ -30,7 +30,7 @@ class Thread(models.AbstractModel):
         msg_sudo = message.sudo()
         msg_type = msg_vals.get('message_type') or msg_sudo.message_type
         author_id = [msg_vals.get('author_id')] if 'author_id' in msg_vals else msg_sudo.author_id.ids
-        if not partner_ids_notify and msg_type and msg_type == 'wa_msgs':
+        if not partner_ids_notify and msg_type and msg_type in ['wa_msgs', 'facebook_msgs', 'insta_msgs']:
             pids = (set(notif_pids) - set(author_id))
             return list(pids)
         return partner_ids_notify

@@ -20,7 +20,6 @@
                         <field name="message_id"/>
                         <field name="mail_message_id"/>
                         <field name="rec_id"/>
-                        <field name="attachment_ids" widget="many2many_tags"/>
                         <field name="fail_reason"/>
                         <field name="active" invisible="1"/>
                         <field name="allowed_company_ids" invisible="1"/>
@@ -41,7 +40,6 @@
                 <field name="partner_id"/>
                 <field name="phone"/>
                 <field name="message"/>
-                <field name="attachment_ids" widget="many2many_tags"/>
                 <field name="model"/>
                 <field name="type"/>
                 <field name="active" invisible="1"/>

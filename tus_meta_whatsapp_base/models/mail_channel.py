@@ -6,6 +6,11 @@ class Channel(models.Model):
     _inherit = 'discuss.channel'
 
     whatsapp_channel = fields.Boolean(string="Whatsapp Channel")
+    company_id = fields.Many2one(
+        "res.company", string="Company",
+    )
+    provider_id = fields.Many2one("provider", string="Provider")
+
 
     @api.constrains('channel_member_ids', 'channel_partner_ids')
     def _constraint_partners_chat(self):

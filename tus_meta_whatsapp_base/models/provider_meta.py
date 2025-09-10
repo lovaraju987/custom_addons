@@ -3,6 +3,7 @@ from odoo.http import request
 import requests
 import json
 from odoo.exceptions import UserError, ValidationError
+from datetime import timedelta
 import time
 import string
 import secrets
@@ -11,6 +12,10 @@ import base64
 import tempfile
 import shutil
 import os
+import mimetypes
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class Provider(models.Model):
@@ -27,10 +32,42 @@ class Provider(models.Model):
         string='Authentication')
     graph_api_authenticated = fields.Boolean('Authenticated', readonly=True)
     graph_api_app_id = fields.Char(string="App ID")
+    graph_api_app_secret = fields.Char(string="App Secret")
+    access_token_expiry_date = fields.Datetime("Access Token Expiry Date")
     user_id = fields.Many2one(string="User", comodel_name='res.users', default=lambda self: self.env.user)
-
     is_token_generated = fields.Boolean('Is Token Generated')
     call_back_url = fields.Html(string="Call Back URL & Verify Token")
+    verify_token = fields.Char(string="Verify Token")
+    contact_sync_request_id = fields.Char('Contact Sync Request ID')
+    chat_sync_request_id = fields.Char('Chat Sync Request ID')
+
+    @api.onchange('user_id', 'user_ids')
+    def onchange_provider_user_id(self):
+        if self and self._origin:
+            provider_users = []
+            provider_users.append(self.user_id) if self.user_id else provider_users
+            provider_users.append(self.user_ids._origin) if self.user_ids else provider_users
+            all_users = self.env['res.users'].sudo().search(
+                ['|', ('provider_id', '=', self._origin.id), ('provider_ids', 'in', self._origin.id)])
+            if provider_users:
+                for provider_user in provider_users:
+                    if self._origin not in provider_user.provider_ids:
+                        provider_user.sudo().write({
+                            'provider_ids': [(4, self._origin.id)]
+                        })
+                    if not provider_user.provider_id:
+                        provider_user.sudo().write({
+                            'provider_id': self._origin.id
+                        })
+                for user in all_users:
+                    if user not in self.user_ids._origin and user != self.user_id and self._origin in user.provider_ids:
+                        user.sudo().write({
+                            'provider_ids': [(3, self._origin.id)],
+                        })
+                        if user.provider_id == self._origin:
+                            user.sudo().write({
+                                'provider_id': False,
+                            })
 
     def GenerateVerifyToken(self):
         seconds = time.time()
@@ -43,6 +80,7 @@ class Provider(models.Model):
         forthSet = ''.join(secrets.choice(alphaNumeric) for i in range(4))
         fifthset = ''.join(secrets.choice(alphaNumericlower) for i in range(4))
         token = firstSet + secondSet + thirdSet + forthSet + fifthset
+        self.verify_token = token
         return token
 
     def meta_error_message_display(self, answer):
@@ -74,6 +112,32 @@ class Provider(models.Model):
                 dict = json.loads(answer.text).get('error').get('message')
                 raise UserError(_(dict))
 
+    def extend_meta_temporary_access_token(self):
+        if self.graph_api_url and self.graph_api_app_id and self.graph_api_app_secret and self.graph_api_token:
+            url = f'{self.graph_api_url}oauth/access_token?grant_type=fb_exchange_token&client_id={self.graph_api_app_id}&client_secret={self.graph_api_app_secret}&fb_exchange_token={self.graph_api_token}'
+            payload = ""
+            headers = {
+                'Content-Type': 'application/json'
+            }
+            try:
+                response = requests.request("GET", url, headers=headers, data=payload)
+            except requests.exceptions.ConnectionError:
+                raise UserError(
+                    ("please check your internet connection."))
+            try:
+                if response.status_code == 200:
+                    data = json.loads(response.text)
+                    if data.get('access_token') and data.get('expires_in'):
+                        self.graph_api_token = data.get('access_token')
+                        self.access_token_expiry_date = fields.Datetime.now() + timedelta(
+                            seconds=data.get('expires_in'))
+                        return {'effect': {'fadeout': 'slow',
+                                           'message': "Your access token is extended for 60 more days!",
+                                           }
+                                }
+            except Exception as e:
+                raise ValidationError(e)
+
     def reload_with_get_status(self):
         if self.graph_api_url and self.graph_api_instance_id and self.graph_api_token:
             url = self.graph_api_url + self.graph_api_instance_id + "?access_token=" + self.graph_api_token
@@ -99,9 +163,10 @@ class Provider(models.Model):
                         "webhookUrl": base_url + "/graph_tus/webhook"
                     }
                     verify_token = self.GenerateVerifyToken()
-                    self.call_back_url = ('<p>Now, You can set below details to your facebook configurations.</p><p>Call Back URL: <u><a href="%s">%s</a></u></p><p>Verify Token: <u '
-                                          'style="color:#017e84">%s</u></p>') % (
-                    data.get('webhookUrl'), data.get('webhookUrl'), verify_token)
+                    self.call_back_url = (
+                                             '<p>Now, You can set below details to your facebook configurations.</p><p>Call Back URL: <u><a href="%s">%s</a></u></p><p>Verify Token: <u '
+                                             'style="color:#017e84">%s</u></p>') % (
+                                             data.get('webhookUrl'), data.get('webhookUrl'), verify_token)
                     self.is_token_generated = True
             else:
                 self.graph_api_authenticated = False
@@ -160,8 +225,10 @@ class Provider(models.Model):
                         self.display_phone_number = data.get('display_phone_number', '')
                         self.quality_rating = data.get('quality_rating', '')
                         self.platform_type = data.get('platform_type', '')
-                        self.throughput_level = data.get('throughput').get('level') if data.get('throughput') and data.get('throughput').get('level') else ''
-                        self.webhook_configuration = data.get('webhook_configuration').get('application') if data.get('webhook_configuration') and data.get('webhook_configuration').get('application') else ''
+                        self.throughput_level = data.get('throughput').get('level') if data.get(
+                            'throughput') and data.get('throughput').get('level') else ''
+                        self.webhook_configuration = data.get('webhook_configuration').get('application') if data.get(
+                            'webhook_configuration') and data.get('webhook_configuration').get('application') else ''
             except Exception as e:
                 raise ValidationError(e)
         else:
@@ -266,12 +333,48 @@ class Provider(models.Model):
                                         'text': component['text']
                                     }))
                                 elif component['format'] in ('IMAGE', 'VIDEO', 'DOCUMENT'):
-                                    component_list.append((0, 0, {
-                                        'type': component['type'].lower(),
-                                        'formate': 'media',
-                                        'formate_media_type': 'dynamic',
-                                        'media_type': component['format'].lower(),
-                                    }))
+                                    try:
+                                        header_url = component.get('example').get('header_handle')[0]
+                                        if header_url:
+                                            image_response = self._get_doc_meta_url(header_url)
+                                            mimetype = requests.head(header_url, timeout=5).headers.get('Content-Type')
+                                            if image_response and image_response.content and mimetype:
+                                                extension = mimetypes.guess_extension(mimetype)
+                                                attachment = self.env['ir.attachment'].sudo().create({
+                                                    'name': f'{template.get("name")}{extension}',
+                                                    'type': 'binary',
+                                                    'datas': image_response.content,
+                                                    'mimetype': mimetype,
+                                                })
+                                                component_list.append((0, 0, {
+                                                    'type': component['type'].lower(),
+                                                    'formate': 'media',
+                                                    'formate_media_type': 'static',
+                                                    'media_type': component['format'].lower(),
+                                                    "attachment_ids": [(4, attachment.id)]
+                                                }))
+                                            else:
+                                                component_list.append((0, 0, {
+                                                    'type': component['type'].lower(),
+                                                    'formate': 'media',
+                                                    'formate_media_type': 'dynamic',
+                                                    'media_type': component['format'].lower(),
+                                                }))
+                                        else:
+                                            component_list.append((0, 0, {
+                                                'type': component['type'].lower(),
+                                                'formate': 'media',
+                                                'formate_media_type': 'dynamic',
+                                                'media_type': component['format'].lower(),
+                                            }))
+                                    except Exception as e:
+                                        _logger.warning(f"Attachment creation skipped due to: {str(e)}")
+                                        component_list.append((0, 0, {
+                                            'type': component['type'].lower(),
+                                            'formate': 'media',
+                                            'formate_media_type': 'dynamic',
+                                            'media_type': component['format'].lower(),
+                                        }))
 
                             if component['type'] in ['BODY', 'FOOTER']:
                                 component_list.append((0, 0, {
@@ -283,19 +386,28 @@ class Provider(models.Model):
                                 for button in component['buttons']:
                                     button_dict = {}
                                     if button['type'] == 'PHONE_NUMBER':
-                                        button_dict.update({'button_type': 'phone', 'button_text': button['text'], 'phone_number': button['phone_number']})
+                                        button_dict.update({'button_type': 'phone', 'button_text': button['text'],
+                                                            'phone_number': button['phone_number']})
                                     if button['type'] == 'URL' and not button.get('example'):
-                                        button_dict.update({'button_type': 'url', 'button_text': button['text'], 'url_type': 'static', 'static_website_url': button['url']})
+                                        button_dict.update(
+                                            {'button_type': 'url', 'button_text': button['text'], 'url_type': 'static',
+                                             'static_website_url': button['url']})
                                     if button['type'] == 'URL' and button.get('example'):
-                                        button_dict.update({'button_type': 'url', 'button_text': button['text'], 'url_type': 'dynamic', 'dynamic_website_url': button['url']})
+                                        button_dict.update(
+                                            {'button_type': 'url', 'button_text': button['text'], 'url_type': 'dynamic',
+                                             'dynamic_website_url': button['url']})
                                     if button['type'] == 'QUICK_REPLY':
                                         button_dict.update(
                                             {'button_type': 'quick_reply', 'button_text': button['text']})
                                     if button['type'] == 'COPY_CODE':
                                         button_dict.update(
-                                            {'button_type': 'copy_code', 'button_text': button['text'], 'coupon_text': button['example'][0]})
+                                            {'button_type': 'copy_code', 'button_text': button['text'],
+                                             'coupon_text': button['example'][0]})
                                     button_list.append(button_dict)
-                                component_list.append((0, 0, {'type': 'buttons', 'wa_button_ids': [(5, 0, 0)] + [(0, 0, button_vals) for button_vals in button_list]}))
+                                component_list.append((0, 0, {'type': 'buttons',
+                                                              'wa_button_ids': [(5, 0, 0)] + [(0, 0, button_vals) for
+                                                                                              button_vals in
+                                                                                              button_list]}))
 
                         vals['components_ids'] = component_list
 
@@ -304,9 +416,6 @@ class Provider(models.Model):
         else:
             raise UserError(
                 ("please authenticated your whatsapp."))
-
-
-
 
     # phone change to mobile
     def graph_api_direct_send_message(self, recipient, message):
@@ -344,8 +453,6 @@ class Provider(models.Model):
     def graph_api_send_message(self, recipient, message, quotedMsgId):
         if self.graph_api_authenticated:
             data = {}
-            # if quotedMsgId:
-            #     data.update({'quotedMsgId':quotedMsgId})
             # phone change to mobile
             data = {
                 "messaging_product": "whatsapp",
@@ -355,6 +462,12 @@ class Provider(models.Model):
                     "body": message,
                 }
             }
+            if quotedMsgId:
+                data.update({
+                    "context": {
+                        "message_id": quotedMsgId
+                    },
+                })
             url = self.graph_api_url + self.graph_api_instance_id + "/messages?access_token=" + self.graph_api_token
             headers = {
                 'Content-Type': 'application/json',
@@ -427,6 +540,17 @@ class Provider(models.Model):
             raise UserError(
                 ("please authenticated your whatsapp."))
 
+    def _get_doc_meta_url(self, url):
+        headers = {}
+        try:
+            answer = requests.get(url, headers=headers)
+        except requests.exceptions.ConnectionError:
+            raise UserError(
+                ("please check your internet connection."))
+        if answer.status_code != 200:
+            self.meta_error_message_display(answer)
+        return answer
+
     def direct_get_image_by_id(self, media_id, recipient, sent_type, attachment_id):
         if self.graph_api_authenticated:
             url = self.graph_api_url + self.graph_api_instance_id + "/messages"
@@ -460,7 +584,7 @@ class Provider(models.Model):
             raise UserError(
                 ("please authenticated your whatsapp."))
 
-    def get_image_by_id(self, media_id, recipient, sent_type, attachment_id):
+    def get_image_by_id(self, media_id, recipient, sent_type, attachment_id, quotedMsgId=False):
         if self.graph_api_authenticated:
             url = self.graph_api_url + self.graph_api_instance_id + "/messages"
             data = {
@@ -472,6 +596,13 @@ class Provider(models.Model):
                     "id": media_id
                 }
             }
+            if quotedMsgId:
+                data.update({
+                    "context": {
+                        "message_id": quotedMsgId
+                    },
+                })
+
             if sent_type == 'document':
                 data[sent_type]['filename'] = attachment_id.name
 
@@ -519,7 +650,7 @@ class Provider(models.Model):
         res = fn(self, attachment_id)
         return res
 
-    def graph_api_add_template(self, name, language, category, components):
+    def graph_api_add_template(self, name, language, category, sub_category, components):
         if self.graph_api_authenticated:
             data = {
                 "name": name,
@@ -527,6 +658,8 @@ class Provider(models.Model):
                 "category": category,
                 "components": components,
             }
+            if sub_category == 'order_status':
+                data.update({"sub_category": sub_category})
             if category == 'AUTHENTICATION':
                 data.pop("language")
                 data.update({"languages": [language]})
@@ -548,7 +681,7 @@ class Provider(models.Model):
             raise UserError(
                 ("please authenticated your whatsapp."))
 
-    def graph_api_resubmit_template(self, category, template_id, components):
+    def graph_api_resubmit_template(self, category, template_id, sub_category, components):
         if self.graph_api_authenticated:
             data = {
                 "category": category,
@@ -697,3 +830,49 @@ class Provider(models.Model):
         else:
             raise UserError(
                 ("please authenticated your whatsapp."))
+
+    def contact_synchronization(self):
+        for rec in self:
+            if rec.graph_api_instance_id:
+                url = f'{rec.graph_api_url}{rec.graph_api_instance_id}/smb_app_data'
+                request_data = {
+                    "messaging_product": "whatsapp",
+                    "sync_type": "smb_app_state_sync"
+                }
+                headers = {
+                    'Content-Type': "application/json",
+                    'Authorization': 'Bearer ' + rec.graph_api_token
+                }
+                try:
+                    response = requests.post(url, data=json.dumps(request_data), headers=headers)
+                    if response.status_code == 200:
+                        res_data = json.loads(response.text)
+                        if res_data and res_data.get('success'):
+                            rec.contact_sync_request_id = res_data.get('request_id')
+                    else:
+                        self.meta_error_message_display(response)
+                except requests.exceptions.ConnectionError:
+                    raise UserError(("please check your internet connection."))
+
+    def chat_synchronization(self):
+        for rec in self:
+            if rec.graph_api_instance_id:
+                url = f'{rec.graph_api_url}{rec.graph_api_instance_id}/smb_app_data'
+                request_data = {
+                    "messaging_product": "whatsapp",
+                    "sync_type": "history"
+                }
+                headers = {
+                    'Content-Type': "application/json",
+                    'Authorization': 'Bearer ' + rec.graph_api_token
+                }
+                try:
+                    response = requests.post(url, data=json.dumps(request_data), headers=headers)
+                    if response.status_code == 200:
+                        res_data = json.loads(response.text)
+                        if res_data and res_data.get('success'):
+                            rec.chat_sync_request_id = res_data.get('request_id')
+                    else:
+                        self.meta_error_message_display(response)
+                except requests.exceptions.ConnectionError:
+                    raise UserError(("please check your internet connection."))

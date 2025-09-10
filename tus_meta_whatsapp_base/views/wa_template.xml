@@ -51,6 +51,7 @@
                                 <field name="template_status" invisible="1"/>
                                 <field name="category"/>
                                 <field name="template_type"/>
+                                <field name="sub_category" invisible="template_type != 'template'"/>
                                 <field name="lang" invisible="1"/>
                                 <field name="language" required="1"/>
                                 <field name="graph_message_template_id" readonly="1"/>
@@ -93,6 +94,7 @@
             <field name="arch" type="xml">
                 <tree string="WA Templates">
                     <field name="name"/>
+                    <field name="provider_id"/>
                     <field name="model_id"/>
                     <field name="template_status" decoration-success="template_status=='APPROVED'" decoration-danger="template_status=='REJECTED'" widget="badge"/>
                     <button name="send_pre_message_by_whatsapp" type="object" string="Send"

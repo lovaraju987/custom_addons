@@ -159,6 +159,7 @@ class WATemplate(models.Model):
     template_status = fields.Char(string="Template Status", readonly=True)
     template_type = fields.Selection([('template', 'Template'),
                                       ('interactive', 'Interactive')], string="Template Type")
+    sub_category = fields.Selection([('order_status', 'Order Status')], string='Sub Category')
     company_id = fields.Many2one('res.company', string='Company', related="provider_id.company_id", readonly=True)
     allowed_company_ids = fields.Many2many(
         comodel_name='res.company', string="Allowed Company",
@@ -352,14 +353,19 @@ class WATemplate(models.Model):
             dict = {}
             if component.type == 'header':
                 if component.formate == 'media':
-                    base_url = self.env.company.get_base_url()
                     domain = []
-                    if component.media_type == 'document':
-                        domain.append(('name', '=', 'demo-wa-pdf'))
-                    if component.media_type == 'video':
-                        domain.append(('name', '=', 'demo-wa-video'))
-                    if component.media_type == 'image':
-                        domain.append(('name', '=', 'demo-wa-image'))
+                    if component.attachment_ids:
+                        for header_attachment in component.attachment_ids:
+                            if component.media_type in ['document','video','image']:
+                                domain.append(('name', '=', header_attachment.name))
+                                domain.append(('datas', '=', header_attachment.datas))
+                    else:
+                        if component.media_type == 'document':
+                            domain.append(('name', '=', 'demo-wa-pdf'))
+                        if component.media_type == 'video':
+                            domain.append(('name', '=', 'demo-wa-video'))
+                        if component.media_type == 'image':
+                            domain.append(('name', '=', 'demo-wa-image'))
                     attachment = self.env['ir.attachment'].sudo().search(domain)
                     if attachment:
                         answer = self.provider_id.graph_api_upload_demo_document(attachment)
@@ -526,10 +532,10 @@ class WATemplate(models.Model):
         if components:
             answer = None
             if self._context.get('resubmit_template', False):
-                answer = self.provider_id.resubmit_template(self.category.upper(), self.graph_message_template_id,
+                answer = self.provider_id.resubmit_template(self.category.upper(), self.graph_message_template_id, self.sub_category,
                                                             components)
             else:
-                answer = self.provider_id.add_template(self.name, self.language, self.category.upper(), components)
+                answer = self.provider_id.add_template(self.name, self.language, self.category.upper(), self.sub_category, components)
 
                 dict = json.loads(answer.text)
             if answer.status_code == 200:

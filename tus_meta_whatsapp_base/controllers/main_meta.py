@@ -1,3 +1,4 @@
+from odoo.fields import first
 from odoo.http import request
 from odoo import http, _, tools
 import requests
@@ -9,7 +10,9 @@ from phonenumbers.phonenumberutil import (
     region_code_for_country_code,
 )
 import base64
-import time
+from werkzeug.exceptions import Forbidden
+
+from http import HTTPStatus
 
 
 class WebHook2(http.Controller):
@@ -18,38 +21,19 @@ class WebHook2(http.Controller):
 
     @http.route(_webhook_url, type='http', methods=['GET'], auth='public', csrf=False)
     def facebook_webhook(self, **kw):
-        if kw.get('hub.verify_token'):
-            return kw.get('hub.challenge')
-
-    def get_channel(self, partner_to, provider):
-        partner = False
-        if len(partner_to) > 0:
-            partner = request.env['res.partner'].sudo().browse(partner_to[0])
-        if request.env.user.has_group('base.group_user'):
-            partner_to.append(request.env.user.partner_id.id)
-        else:
-            partner_to.append(provider.user_id.partner_id.id)
-
-        provider_channel_id = partner.channel_provider_line_ids.filtered(lambda s: s.provider_id == provider)
-        if provider_channel_id:
-            channel = provider_channel_id.channel_id
-            if request.env.user.partner_id.id not in channel.channel_partner_ids.ids and request.env.user.has_group(
-                    'base.group_user'):
-                channel.sudo().write({'channel_partner_ids': [(4, request.env.user.partner_id.id)]})
-        else:
-            # phone change to mobile
-            name = partner.mobile
-            channel = request.env['discuss.channel'].sudo().create({
-                'channel_type': 'chat',
-                'name': name,
-                'whatsapp_channel': True,
-                'channel_partner_ids': [(4, x) for x in partner_to],
-            })
-            partner.write({'channel_provider_line_ids': [
-                (0, 0, {'channel_id': channel.id, 'provider_id': provider.id})]})
-        if channel:
-            provider._add_multi_agents(channel)
-        return channel
+        verify_token = kw.get('hub.verify_token')
+        hub_mode = kw.get('hub.mode')
+        hub_challenge = kw.get('hub.challenge')
+        if not (verify_token and hub_mode and hub_challenge):
+            return Forbidden()
+        provider_id = request.env['provider'].sudo().search([('verify_token', '=', verify_token)])
+        if hub_mode == 'subscribe' and provider_id:
+            response = request.make_response(hub_challenge)
+            response.status_code = HTTPStatus.OK
+            return response
+        response = request.make_response({})
+        response.status_code = HTTPStatus.FORBIDDEN
+        return response
 
     def get_url(self, provider, media_id, phone_number_id):
         if provider.graph_api_authenticated:
@@ -120,7 +104,10 @@ class WebHook2(http.Controller):
             attachment_value.update({'name': 'whatsapp_audio',
                                      'type': 'binary',
                                      'mimetype': message_obj.get('audio').get('mime_type') if message_obj.get(
-                                         'audio') and message_obj.get('audio').get('mime_type') else 'audio/mpeg'})
+                                         'audio') and message_obj.get('audio').get('mime_type') and
+                                                                                              message_obj.get(
+                                                                                                  'audio').get(
+                                                                                                  'mime_type') != 'audio/ogg; codecs=opus' else 'audio/mpeg'})
             mail_message.update({'body': message_obj.get('audio').get(
                 'caption') if 'audio' in message_obj and 'caption' in message_obj.get(
                 'audio') else ''})
@@ -148,13 +135,76 @@ class WebHook2(http.Controller):
 
             return attachment, mail_message, history
 
-    @http.route(_meta_fb_url, type='json', methods=['GET', 'POST'], auth='public', csrf=False)
+    def _create_wa_message(self, mes, provider, channel, message_values, vals):
+        parent_id = mes.get('context', {}).get('id') or mes.get('reaction', {}).get('message_id')
+        if parent_id:
+            parent_message = request.env['mail.message'].sudo().search_read(
+                [('wa_message_id', '=', parent_id)],
+                ['id', 'chatter_wa_model', 'chatter_wa_res_id']
+            )
+            if parent_message:
+                message_values.update({
+                    'parent_id': parent_message[0]['id'],
+                    'model': parent_message[0].get('chatter_wa_model') or 'discuss.channel',
+                    'res_id': parent_message[0].get('chatter_wa_res_id') or channel.id
+                })
+
+        message = request.env['mail.message'].sudo().with_user(provider.user_id.id).with_context(
+            {'message': 'received'}).create(message_values)
+
+        channel._broadcast(channel.channel_member_ids.mapped('partner_id').ids)
+        channel._notify_thread(message, message_values)
+        vals.update({'mail_message_id': message.id})
+
+        request.env['whatsapp.history'].sudo().with_user(provider.user_id.id).with_context(
+            {'message': 'received'}).create(vals)
+
+        return message
+
+    def _sync_contact_data_information(self, contact_sync_data):
+        for sync_data in contact_sync_data:
+            if sync_data.get('type') == 'contact' and sync_data.get('contact'):
+                partners = request.env['res.partner'].sudo().search(
+                    ['|', ('phone', '=', sync_data.get('contact').get('phone_number')),
+                     ('mobile', '=', sync_data.get('contact').get('phone_number'))])
+                if partners:
+                    for partner in partners:
+                        partner.sudo().write({
+                            'name': sync_data.get('contact').get('full_name')
+                        })
+                else:
+                    request.env['res.partner'].sudo().create(
+                        {'name': sync_data.get('contact').get('full_name'),
+                         'is_whatsapp_number': True,
+                         'mobile': sync_data.get('contact').get('phone_number')})
+
+    def _check_wa_opt_in_out_message(self, mes, partner, message_values, user_partner, provider, channel, vals):
+        opt_out = False
+        if mes.get('type') == 'text' and mes.get('text').get('body') == 'STOP' and 'context' in mes:
+            partner.is_in_out = True
+
+            self._create_wa_message(mes, provider, channel, message_values, vals)
+
+            message_values.update({
+                'body': 'You\'ve stopped receiving notifications from us. To start them again, simply reply with: START',
+                'author_id': user_partner.id,
+                'email_from': user_partner.email or '',
+                'parent_id': None
+            })
+
+            request.env['mail.message'].sudo().with_user(
+                provider.user_id.id).with_context({'message': 'sent'}).create(message_values)
+            opt_out = True
+
+        elif mes.get('type') == 'text' and mes.get('text').get('body') == 'START' and 'context' in mes:
+            partner.is_in_out = False
+            opt_out = False
+        return opt_out
+
+    @http.route(_meta_fb_url, type='json', methods=['POST'], auth='public', csrf=False)
     def meta_webhook(self, **kw):
         wa_dict = {}
-        is_tus_discuss_installed = request.env['ir.module.module'].sudo().search(
-            [('state', '=', 'installed'), ('name', '=', 'tus_meta_wa_discuss')])
-        if not is_tus_discuss_installed:
-            return wa_dict
+
         data = json.loads(request.httprequest.data.decode('utf-8'))
         wa_dict.update({'messages': data.get('messages')})
         provider = request.env['provider'].sudo()
@@ -195,7 +245,8 @@ class WebHook2(http.Controller):
                                     {'type': 'fail', 'fail_reason': acknowledgment.get('errors')[0].get('title')})
                             request.env.cr.commit()
 
-                        if wa_mail_message and wa_mail_message.wp_status != acknowledgment.get('status') and wa_mail_message.wp_status != 'read':
+                        if wa_mail_message and wa_mail_message.wp_status != acknowledgment.get(
+                                'status') and wa_mail_message.wp_status != 'read':
                             temp_id = wa_mail_message.id + datetime.datetime.now().second / 100
                             if acknowledgment.get('status') in ['sent', 'delivered', 'read']:
                                 wa_mail_message.sudo().with_context(temporary_id=temp_id).write(
@@ -208,57 +259,134 @@ class WebHook2(http.Controller):
                             if wa_mail_message:
                                 channel.sudo()._notify_thread(wa_mail_message)
 
+            is_tus_discuss_installed = request.env['ir.module.module'].sudo().search(
+                [('state', '=', 'installed'), ('name', '=', 'tus_meta_wa_discuss')])
+            if not is_tus_discuss_installed:
+                return wa_dict
+
+            if data_value_obj.get('state_sync'):
+                self._sync_contact_data_information(data_value_obj.get('state_sync'))
+
             if provider.graph_api_authenticated:
                 user_partner = provider.user_id.partner_id
-                if data_value_obj.get('messages'):
-                    for mes in data_value_obj.get('messages'):
-                        wa_dict.update({'chat': True})
-                        partners = request.env['res.partner'].sudo().search(
-                            ['|', ('phone', '=', mes.get('from')), ('mobile', '=', mes.get('from'))])
-                        wa_dict.update({'partners': partners})
-                        if not partners:
-                            pn = phonenumbers.parse('+' + mes.get('from'))
-                            country_code = region_code_for_country_code(pn.country_code)
-                            country_id = request.env['res.country'].sudo().search(
-                                [('code', '=', country_code)], limit=1)
-                            partners = request.env['res.partner'].sudo().create(
-                                {'name': data.get('entry')[0].get('changes')[0].get('value').get('contacts')[
-                                    0].get('profile').get('name'), 'country_id': country_id.id,
-                                 'is_whatsapp_number': True,
-                                 'mobile': mes.get('from')})
+                if data_value_obj.get('messages') or data_value_obj.get('message_echoes'):
+                    for mes in (data_value_obj.get('messages') or data_value_obj.get('message_echoes')):
+                        message_values = {
+                            'model': 'discuss.channel',
+                            'message_type': 'wa_msgs',
+                            'wa_message_id': mes.get('id'),
+                            'isWaMsgs': True,
+                            'subtype_id': request.env['ir.model.data'].sudo()._xmlid_to_res_id(
+                                'mail.mt_comment'),
+                            'company_id': provider.company_id.id,
+                        }
+                        vals = {
+                            'provider_id': provider.id,
+                            'message_id': mes.get('id'),
+                            'type': 'received',
+                            'attachment_ids': False,
+                            'company_id': provider.company_id.id,
+                        }
+                        channel = request.env['discuss.channel']
+                        if data_value_obj.get('messages'):
+                            wa_dict.update({'chat': True})
+                            partners = request.env['res.partner'].sudo().search(
+                                ['|', ('phone', '=', mes.get('from')), ('mobile', '=', mes.get('from'))])
+                            wa_dict.update({'partners': partners})
+                            if not partners:
+                                if (data and data.get('entry') and data.get('entry')[
+                                    0].get('changes') and data.get('entry')[0].get('changes')[0].get('value') and
+                                        data.get('entry')[0].get('changes')[0].get(
+                                            'value').get('contacts') and
+                                        data.get('entry')[0].get('changes')[0].get('value').get('contacts')[
+                                            0].get('profile') and
+                                        data.get('entry')[0].get('changes')[0].get('value').get('contacts')[
+                                            0].get('profile').get('name')):
+                                    partner_name = data.get('entry')[0].get('changes')[0].get('value').get('contacts')[
+                                        0].get('profile').get('name')
+                                else:
+                                    partner_name = mes.get('from')
+                                pn = phonenumbers.parse('+' + mes.get('from'))
+                                country_code = region_code_for_country_code(pn.country_code)
+                                country_id = request.env['res.country'].sudo().search(
+                                    [('code', '=', country_code)], limit=1)
+                                partners = request.env['res.partner'].sudo().create(
+                                    {'name': partner_name, 'country_id': country_id.id,
+                                     'is_whatsapp_number': True,
+                                     'mobile': mes.get('from')})
+                            for partner in partners:
+                                channel = provider.get_channel_whatsapp(partner, provider.user_id)
 
-                        for partner in partners:
-                            channel = provider.get_channel_whatsapp(partner, provider.user_id)
+                                message_values.update({
+                                    'author_id': partner.id,
+                                    'email_from': partner.email or '',
+                                    'partner_ids': [(4, partner.id)],
+                                    'reply_to': partner.email,
+                                    'res_id': channel.id,
+                                })
+                                vals.update({
+                                    'author_id': user_partner.id,
+                                    'partner_id': partner.id,
+                                    'phone': partner.mobile,
+                                })
+                                opt_out = self._check_wa_opt_in_out_message(mes, partner, message_values, user_partner, provider, channel, vals)
+                                if opt_out:
+                                    break
 
-                            message_values = {
-                                'author_id': partner.id,
-                                'email_from': partner.email or '',
-                                'model': 'discuss.channel',
-                                'message_type': 'wa_msgs',
-                                'wa_message_id': mes.get('id'),
-                                'isWaMsgs': True,
-                                'subtype_id': request.env['ir.model.data'].sudo()._xmlid_to_res_id(
-                                    'mail.mt_comment'),
-                                'partner_ids': [(4, partner.id)],
-                                'res_id': channel.id,
-                                'reply_to': partner.email,
-                                'company_id': provider.company_id.id,
-                            }
-                            vals = {
-                                'provider_id': provider.id,
-                                'author_id': user_partner.id,
-                                'message_id': mes.get('id'),
-                                'type': 'received',
-                                'partner_id': partner.id,
-                                'phone': partner.mobile,
-                                'attachment_ids': False,
-                                'company_id': provider.company_id.id,
-                            }
+                        elif data_value_obj.get('message_echoes'):
+                            wa_dict.update({'chat': True})
+                            if data_value_obj.get('metadata').get('display_phone_number') == mes.get('from'):
+                                vals.update({'type': 'sent'})
+                                partners = request.env['res.partner'].sudo().search(
+                                    ['|', ('phone', '=', mes.get('to')), ('mobile', '=', mes.get('to'))])
+                                if not partners:
+                                    pn = phonenumbers.parse('+' + mes.get('to'))
+                                    country_code = region_code_for_country_code(pn.country_code)
+                                    country_id = request.env['res.country'].sudo().search(
+                                        [('code', '=', country_code)], limit=1)
+                                    partners = request.env['res.partner'].sudo().create(
+                                        {'name': mes.get('to'), 'country_id': country_id.id,
+                                         'is_whatsapp_number': True,
+                                         'mobile': mes.get('to')})
+                            else:
+                                partners = request.env['res.partner'].sudo().search(
+                                    ['|', ('phone', '=', mes.get('from')), ('mobile', '=', mes.get('from'))])
+                                if not partners:
+                                    pn = phonenumbers.parse('+' + mes.get('from'))
+                                    country_code = region_code_for_country_code(pn.country_code)
+                                    country_id = request.env['res.country'].sudo().search(
+                                        [('code', '=', country_code)], limit=1)
+                                    partners = request.env['res.partner'].sudo().create(
+                                        {'name': mes.get('from'), 'country_id': country_id.id,
+                                         'is_whatsapp_number': True,
+                                         'mobile': mes.get('from')})
+                            wa_dict.update({'partners': partners})
+                            for partner in partners:
+                                channel = provider.get_channel_whatsapp(partner, provider.user_id)
+
+                                message_values.update({
+                                    'author_id': user_partner.id,
+                                    'email_from': user_partner.email or '',
+                                    'partner_ids': [(4, user_partner.id)],
+                                    'reply_to': user_partner.email,
+                                    'res_id': channel.id,
+                                })
+                                vals.update({
+                                    'author_id': user_partner.id,
+                                    'partner_id': partner.id,
+                                    'phone': partner.mobile,
+                                })
+                                opt_out = self._check_wa_opt_in_out_message(mes, partner, message_values, user_partner,
+                                                                            provider, channel, vals)
+                                if opt_out:
+                                    break
+                        if channel:
                             if mes.get('type') == 'text':
                                 message_values.update({
                                     'body': mes.get('text').get('body'),
                                 })
                                 vals.update({'message': mes.get('text').get('body')})
+
                             elif mes.get('type') == 'location':
                                 # phone change to mobile
                                 lat = mes.get('location').get('latitude')
@@ -301,7 +429,7 @@ class WebHook2(http.Controller):
                                         'body': 'Whatsapp Flow Received'
                                     })
                                     vals.update({
-                                        'message':'Whatsapp Flow Received'
+                                        'message': 'Whatsapp Flow Received'
                                     })
 
                                 else:
@@ -324,78 +452,9 @@ class WebHook2(http.Controller):
                                     'message': mes.get('text').get('body') if mes.get('text') else order_message
                                 })
 
-                            if 'context' in mes or mes.get('reaction', {}).get('message_id', False):
-                                parent_message = request.env['mail.message'].sudo().search_read(
-                                    [('wa_message_id', '=',
-                                      mes.get('context').get('id') if mes.get('context', False) else mes.get(
-                                          'reaction').get('message_id'))],
-                                    ['id', 'chatter_wa_model', 'chatter_wa_res_id',
-                                     'chatter_wa_message_id'], limit=1)
-                                if len(parent_message) > 0:
-                                    message_values.update({'parent_id': parent_message[0]['id'],
-                                                           'model': parent_message[0].get('chatter_wa_model') or 'discuss.channel',
-                                                           'res_id': parent_message[0].get('chatter_wa_res_id') or channel.id})
-
-                            message = request.env['mail.message'].sudo().with_user(provider.user_id.id).with_context(
-                                {'message': 'received'}).create(
-                                message_values)
-                            channel._broadcast(channel.channel_member_ids.mapped('partner_id').ids)
-                            channel._notify_thread(message, message_values)
-                            vals.update({'mail_message_id': message.id})
-                            request.env['whatsapp.history'].sudo().with_user(provider.user_id.id).with_context(
-                                {'message': 'received'}).create(vals)
+                            self._create_wa_message(mes, provider, channel, message_values, vals)
 
         return wa_dict
-
-    @http.route(['/send/product'], type='json', methods=['POST'])
-    def _send_product_by_whatsapp(self, **kw):
-        provider_id = False
-        if 'provider_id' in kw and kw.get('provider_id') != '':
-            channel_company_line_id = request.env['channel.provider.line'].search(
-                [('channel_id', '=', kw.get('provider_id'))])
-            if channel_company_line_id.provider_id:
-                provider_id = channel_company_line_id.provider_id
-
-        # image = kw.get('image').split(',')[1]
-        Attachment = request.env['ir.attachment']
-        partner_id = request.env['res.partner'].sudo().browse(int(kw.get('partner_id')))
-        product = request.env['product.product'].sudo().browse(int(kw.get('product_id')))
-        body_message = product.name + "\n" + request.env.user.company_id.currency_id.symbol + " " + str(
-            product.list_price) + " / " + product.uom_id.name
-        attac_id = False
-        if product.image_1920:
-            name = product.name + '.png'
-            attac_id = request.env['ir.attachment'].sudo().search([('name', '=', name)], limit=1)
-            if not attac_id:
-                attac_id = Attachment.create({'name': name,
-                                              'type': 'binary',
-                                              'datas': product.image_1920,
-                                              'store_fname': name,
-                                              'res_model': 'wa.msgs',
-                                              'mimetype': 'image/jpeg',
-                                              })
-        user_partner = request.env.user.partner_id
-        channel = self.get_channel([int(kw.get('partner_id'))], provider_id)
-
-        if channel:
-            message_values = {
-                'body': body_message,
-                'author_id': user_partner.id,
-                'email_from': user_partner.email or '',
-                'model': 'discuss.channel',
-                'message_type': 'wa_msgs',
-                'isWaMsgs': True,
-                # 'subtype_id': request.env['ir.model.data'].sudo().xmlid_to_res_id('mail.mt_comment'),
-                'subtype_id': request.env['ir.model.data'].sudo()._xmlid_to_res_id('mail.mt_comment'),
-                # 'channel_ids': [(4, channel.id)],
-                'partner_ids': [(4, user_partner.id)],
-                'res_id': channel.id,
-                'reply_to': user_partner.email,
-                # 'company_id': kw.get('company_id'),
-            }
-            if attac_id:
-                message_values.update({'attachment_ids': [(4, attac_id.id)]})
-        return True
 
     def slicedict(self, d, s):
         return {k: v for k, v in d.items() if k.startswith(s)}

@@ -1,13 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates id="template_ext" xml:space="preserve">
-        <t t-name="ChannelLoadExt" t-inherit="mail.DiscussSidebarCategories" t-inherit-mode="extension" owl="1">
-            <xpath expr="//t[@t-foreach='categories']" position="after">
-                 <t t-if="wpchannel.value(store).isOpen">
-                     <div class="d-flex justify-content-center">
-                     <button class="btn btn-primary rounded"
-                             t-on-click="onClickUpdateMesssageLimit">Load More ...</button>
-                </div>
-                 </t>
+        <t t-name="ChannelLoadExt" t-inherit="mail.DiscussSidebarCategory" t-inherit-mode="extension" owl="1">
+            <xpath expr="//t[@t-call='mail.DiscussSidebarChannel']" position="after">
+                <t t-if="category.isOpen and ['WpChannels', 'FbChannels', 'InstaChannels'].includes(category.id)">
+                    <t t-if="category.threads.length > 0 ">
+                         <div class="d-flex justify-content-center">
+                        <button class="w-100 load_more rounded"
+                                t-on-click="() => this.onClickUpdateMessageLimit(category.id)">Load More <i class="oi oi-chevron-down ms-2"/></button>
+                    </div>
+                    </t>
+<!--                    <t>-->
+<!--                        <div class="d-flex justify-content-center">-->
+<!--                            <button class="w-100 load_more rounded"-->
+<!--                                t-on-click="() => this.onClickShowLess(category.id)">-->
+<!--                            Show Less <i class="oi oi-chevron-up ms-2"></i>-->
+<!--                        </button>-->
+<!--                        </div>-->
+<!--                    </t>-->
+
+                </t>
             </xpath>
         </t>
 </templates>

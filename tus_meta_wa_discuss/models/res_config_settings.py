@@ -10,8 +10,8 @@ class ResConfigSettings(models.TransientModel):
 
     not_wa_msgs_btn_in_chatter = fields.Many2many("ir.model","send_wa_msgs_model_rel","model_id","send_wa_msgs_id")
     not_send_msgs_btn_in_chatter = fields.Many2many("ir.model","send_msgs_model_rel","model_id","send_msgs_id")
-    load_whatsapp_channel = fields.Integer("Load Whatsapp Channel",readonly=False)
-    whatsapp_channel = fields.Char(string="Default Whatsapp Channel",readonly=False,default=5)
+    load_whatsapp_channel = fields.Char("Load Whatsapp Channel",readonly=False)
+    whatsapp_channel = fields.Char(string="Default Whatsapp Channel",readonly=False)
 
     def set_values(self):
         res = super(ResConfigSettings, self).set_values()
