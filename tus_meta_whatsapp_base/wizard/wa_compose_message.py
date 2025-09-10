@@ -5,7 +5,6 @@ import requests
 
 from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError
-import pytz
 
 
 class WAComposer(models.TransientModel):
@@ -55,7 +54,7 @@ class WAComposer(models.TransientModel):
             if 'report' in self.env.context:
                 report = str(self.env.context.get('report'))
                 if active_model == 'event.registration':
-                    pdf = self.env['ir.actions.report']._render_qweb_pdf(report, record.event_id.id)
+                    pdf = self.env['ir.actions.report']._render_qweb_pdf(report, record.id)
                 else:
                     pdf = self.env['ir.actions.report']._render_qweb_pdf(report, record.id)
                 Attachment = self.env['ir.attachment'].sudo()
@@ -71,7 +70,7 @@ class WAComposer(models.TransientModel):
                     name = ((record.state in ('posted') and record.name) or
                             _('Draft - %s') % record.name)
                 elif active_model == 'event.registration':
-                    name = (record.name or
+                    name = (record.id or
                             _('Event - %s') % record.name)
                 else:
                     name = ((record.state in ('draft', 'sent') and _('Quotation - %s') % record.name) or
@@ -114,14 +113,14 @@ class WAComposer(models.TransientModel):
     model = fields.Char('Related Document Model', index=True)
     res_id = fields.Integer('Related Document ID', index=True)
     provider_id = fields.Many2one('provider', 'Provider')
-    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company, required=True)
+    company_ids = fields.Many2many('res.company', string='Company', default=lambda self: self.env.companies, required=True)
     allowed_provider_ids = fields.Many2many('provider', 'Provider', compute='update_allowed_providers')
 
-    @api.depends('company_id')
+    @api.depends('company_ids')
     def update_allowed_providers(self):
         self.allowed_provider_ids = self.env.user.provider_ids
 
-    @api.onchange('company_id', 'provider_id')
+    @api.onchange('company_ids', 'provider_id')
     def onchange_company_provider(self):
         self.template_id = False
         self.domain_template_ids = False
@@ -150,20 +149,13 @@ class WAComposer(models.TransientModel):
                             for length, variable in zip(range(variables_length), variables_ids):
                                 st = '{{%d}}' % (length + 1)
                                 if variable.field_id.model == active_model or variable.free_text:
-                                    if variable.field_id.ttype == 'datetime':
-                                        value = active_record.read()[0][variable.field_id.name].astimezone(
-                                            pytz.timezone(record.partner_id.tz or record.env.user.tz)).strftime(
-                                            '%Y-%m-%d %H:%M')
+                                    value = active_record.read()[0][
+                                        variable.field_id.name] if variable.field_id.name else variable.free_text
+                                    if isinstance(value, tuple):
+                                        value = value[1]
                                         temp_body = temp_body.replace(st, str(value))
-
                                     else:
-                                        value = active_record.read()[0][
-                                            variable.field_id.name] if variable.field_id.name else variable.free_text
-                                        if isinstance(value, tuple):
-                                            value = value[1]
-                                            temp_body = temp_body.replace(st, str(value))
-                                        else:
-                                            temp_body = temp_body.replace(st, str(value))
+                                        temp_body = temp_body.replace(st, str(value))
                             record.body = tools.plaintext2html(temp_body)
                         else:
                             record.body = \
@@ -185,8 +177,8 @@ class WAComposer(models.TransientModel):
         if not (self.body or self.template_id or self.attachment_ids):
             return {}
         
-        active_model = str(self.env.context.get('active_model')) if self.env.context.get('active_model', False) else self.model
-        active_id = self.env.context.get('active_id') if self.env.context.get('active_id', False) else self.res_id
+        active_model = self.model if self.model else str(self.env.context.get('active_model'))
+        active_id = self.res_id if self.res_id else self.env.context.get('active_id')
         record = self.env[active_model].browse(active_id)
         if active_model in ['sale.order', 'purchase.order']:
             record.filtered(lambda s: s.state == 'draft').write({'state': 'sent'})
@@ -197,15 +189,15 @@ class WAComposer(models.TransientModel):
         if channel:
             message_values = {
                 'body': tools.html2plaintext(self.body) if self.body else '',
-                'author_id': self.provider_id.user_id.partner_id.id,
-                'email_from': self.provider_id.user_id.partner_id.email or '',
+                'author_id': self.env.user.partner_id.id,
+                'email_from': self.env.user.partner_id.email or '',
                 'model': active_model,
                 'message_type': 'wa_msgs',
                 'isWaMsgs': True,
                 'subtype_id': self.env['ir.model.data'].sudo()._xmlid_to_res_id('mail.mt_comment'),
-                'partner_ids': [(4, self.provider_id.user_id.partner_id.id)],
+                'partner_ids': [(4, self.env.user.partner_id.id)],
                 'res_id': active_id,
-                'reply_to': self.provider_id.user_id.partner_id.email,
+                'reply_to': self.env.user.partner_id.email,
                 'attachment_ids': [(4, attac_id.id) for attac_id in self.attachment_ids],
             }
             context_vals = {'provider_id': self.provider_id}
@@ -215,6 +207,10 @@ class WAComposer(models.TransientModel):
                                      'attachment_ids': self.attachment_ids})
             if self.env.context.get('booking_id'):
                 context_vals.update({'booking_id':self.env.context.get('booking_id')})
+            if self.env.context.get('is_automated_action'):
+                context_vals.update({'is_automated_action':self.env.context.get('is_automated_action')})
+            if self.env.context.get('report_taken'):
+                context_vals.update({'report_taken':self.env.context.get('report_taken')})
 
             mail_message = self.env['mail.message'].sudo().with_context(context_vals).create(
                 message_values)

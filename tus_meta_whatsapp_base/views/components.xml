@@ -11,14 +11,11 @@
                             <field name="type"/>
                             <field name="formate" invisible="type != 'header'"/>
                             <field name="formate_media_type" invisible="type != 'header' or formate != 'media'"/>
-                            <field name="media_type" invisible="type != 'header' or formate != 'media'"/>
+                            <field name="media_type" invisible="type != 'header' or formate != 'media' or formate_media_type not in ['static', 'dynamic']"/>
                             <field name="attachment_ids" widget="many2many_binary"
-                                   invisible="formate != 'media' or formate_media_type != 'static'"/>
+                                   invisible="formate != 'media' or formate_media_type != 'static' or media_type not in ['document', 'video', 'image']"/>
                             <field name="text"
-                                   invisible="type == 'header' and formate == 'media' or type == 'buttons' or type == 'interactive' or type == 'carousel' "/>
-                            <field name ="add_security_recommendation" invisible="1" />
-                            <field name ="code_expiration_minutes" invisible="type != 'footer'" />
-
+                                   invisible="type == 'header' and formate != 'text' or type == 'buttons' or type == 'interactive' or type == 'carousel' "/>
                             <field name="is_expiration" invisible="type != 'limited_time_offer'"/>
                             <field name="limited_offer_exp_date" invisible="type != 'limited_time_offer'"/>
                             <field name="model_id" force_save="1" invisible="1"/>

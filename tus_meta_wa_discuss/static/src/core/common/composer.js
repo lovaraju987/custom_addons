@@ -12,6 +12,7 @@ patch(Chatter.prototype, {
          this.env.services.action.doAction(
             {
                 type: 'ir.actions.act_window',
+                name : 'Send WhatsApp Message',
                 res_model: 'wa.compose.message',
                 view_mode: 'form',
                 views: [[false, 'form']],
@@ -42,7 +43,6 @@ patch(Chatter.prototype, {
 //        return super.placeholder;
 //    },
 //    async onClickFullComposer(ev) {
-//    debugger;
 //        if (this.props.type !== "note") {
 //            // auto-create partners of checked suggested partners
 //            const emailsWithoutPartners = this.thread.suggestedRecipients
@@ -162,7 +162,6 @@ patch(Chatter.prototype, {
 ////        let postData;
 ////        var isWhatsapp = false
 ////
-//////        debugger;
 ////        if(this.props.type === "WaMessage"){
 ////            postData = {
 ////                attachment_ids: this.props.composer.attachments,

@@ -8,6 +8,8 @@
             <field name="arch" type="xml">
                 <field name="description" position="before">
                     <field name="whatsapp_channel"/>
+                    <field name="company_id" readonly="1"/>
+                    <field name="provider_id" readonly="1"/>
                 </field>
             </field>
         </record>

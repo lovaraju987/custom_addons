@@ -2,8 +2,6 @@ from odoo import models, api, fields, tools
 import json
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime
-import secrets
-import string
 import pytz
 
 image_type = ['image/avif', 'image/bmp', 'image/gif', 'image/vnd.microsoft.icon', 'image/jpeg', 'image/png',
@@ -68,11 +66,6 @@ class WhatsappHistory(models.Model):
         for rec in self:
             rec.phone = rec.partner_id.mobile
 
-    def generate_secure_otp(self, length):
-        characters = string.digits  # Only digits for OTP
-        otp = ''.join(secrets.choice(characters) for _ in range(length))
-        return otp
-
     def _get_variable_params_dict(self, variable, object_data):
         parameter_dict = {}
         if variable.field_id.ttype in ['text', 'char', 'selection']:
@@ -100,7 +93,7 @@ class WhatsappHistory(models.Model):
                                            object_data.get(variable.field_id.name)) if object_data.get(
                                            variable.field_id.name) else variable.free_text or ''})
         elif variable.field_id.ttype in ["date", "datetime"]:
-            if variable.field_id.ttype == 'datetime':
+             if variable.field_id.ttype == 'datetime':
                 parameter_dict.update(
                     {
                         "type": "text",
@@ -109,14 +102,14 @@ class WhatsappHistory(models.Model):
                             "%d/%m/%Y %H:%M") if object_data.get(variable.field_id.name) else variable.free_text or '',
                     }
                 )
-            else:
-                parameter_dict.update(
-                    {
-                        "type": "text",
-                        "text": object_data.get(variable.field_id.name).strftime("%d/%m/%Y") if object_data.get(
-                            variable.field_id.name) else variable.free_text or '',
-                    }
-                )
+             else:
+                 parameter_dict.update(
+                     {
+                         "type": "text",
+                         "text": object_data.get(variable.field_id.name).strftime("%d/%m/%Y") if object_data.get(
+                             variable.field_id.name) else variable.free_text or '',
+                     }
+                 )
         elif variable.field_id.ttype == 'many2one':
             parameter_dict.update({'type': 'text',
                                    'text': object_data.get(variable.field_id.name)[1] if object_data.get(
@@ -254,6 +247,17 @@ class WhatsappHistory(models.Model):
                                 template_dict.update({'parameters': parameter})
                             if component.type == 'carousel':
                                 wa_template._get_carousel_params(component, object_data, res.provider_id, cards)
+                            if component.type == 'order_status':
+                                parameters = [{
+                                    "type": component.type,
+                                    "order_status": {
+                                        "reference_id": object_data.get('name'),
+                                        "order": {
+                                            'status': 'completed'
+                                        }
+                                    }
+                                }]
+                                template_dict.update({'type': component.type, 'parameters': parameters})
                             if bool(template_dict):
                                 params.append(template_dict)
                             if cards:
@@ -333,8 +337,14 @@ class WhatsappHistory(models.Model):
                                 answer = res.provider_id.send_image(attachment_id)
                                 if answer.status_code == 200:
                                     dict = json.loads(answer.text)
-                                    getimagebyid = res.provider_id.get_image_by_id(dict.get('id'), res.partner_id,
-                                                                                   sent_type, attachment_id)
+                                    if 'message_parent_id' in self.env.context:
+                                        parent_msg = self.env['mail.message'].sudo().search(
+                                            [('id', '=', self.env.context.get('message_parent_id').id)])
+                                        getimagebyid = res.provider_id.get_image_by_id(dict.get('id'), res.partner_id,
+                                                                                       sent_type, attachment_id, parent_msg.wa_message_id)
+                                    else:
+                                        getimagebyid = res.provider_id.get_image_by_id(dict.get('id'), res.partner_id,
+                                                                                       sent_type, attachment_id)
                                     if getimagebyid.status_code == 200:
                                         imagedict = json.loads(getimagebyid.text)
                                     if 'messages' in imagedict and imagedict.get('messages'):

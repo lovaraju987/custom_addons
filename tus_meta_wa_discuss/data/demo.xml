@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding='UTF-8'?>
+<odoo>
+    <data noupdate="0">
+        <record id="default_whatsapp_channel_param" model="ir.config_parameter">
+            <field name="key">tus_meta_wa_discuss.whatsapp_channel</field>
+            <field name="value" eval="5"/>
+        </record>
+
+        <record id="default_load_whatsapp_channel_param" model="ir.config_parameter">
+            <field name="key">tus_meta_wa_discuss.load_whatsapp_channel</field>
+            <field name="value" eval="2"/>
+        </record>
+
+    </data>
+</odoo>
