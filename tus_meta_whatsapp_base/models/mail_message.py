@@ -43,13 +43,13 @@ class Message(models.Model):
 
             if values.get('model') and values.get('res_id'):
                 channel = self.env[values.get('model')].browse(values.get('res_id'))
-            if values.get('model') == 'discuss.channel' and channel.whatsapp_channel and is_tus_discuss_installed:
+            if values.get('model') == 'discuss.channel' and channel.whatsapp_channel and values.get('message_type') != 'notification' and is_tus_discuss_installed:
                 values.update({'message_type': 'wa_msgs', 'isWaMsgs': True})
             if 'email_from' not in values:  # needed to compute reply_to
 
                 author_id, email_from = self.env['mail.thread'].with_context(temporary_id=110.2)._message_compute_author(values.get('author_id'),
                                                                                         email_from=None,
-                                                                                        raise_exception=False)
+                                                                                        raise_on_email=False)
                 values['email_from'] = email_from
             if not values.get('message_id'):
                 values['message_id'] = self._get_message_id(values)
@@ -93,7 +93,7 @@ class Message(models.Model):
             # delegate creation of tracking after the create as sudo to avoid access rights issues
             tracking_values_list.append(values.pop('tracking_value_ids', False))
 
-        messages = super(Message, self).create(values_list)
+        messages = super(Message, self.with_context({"is_automated_action": self._context.get('is_automated_action', False),"report_taken": self._context.get('report_taken', False)})).create(values_list)
 
         check_attachment_access = []
         if all(isinstance(command, int) or command[0] in (4, 6) for values in values_list for command in

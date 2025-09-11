@@ -1,6 +1,6 @@
 {
     'name': 'Odoo WhatsApp Integration | Odoo Meta WhatsApp Graph API | Odoo V17 Community Edition',
-    'version': '17.0',
+    'version': '17.5',
     'author': 'TechUltra Solutions Private Limited',
     'category': 'Base',
     'live_test_url': 'https://www.techultrasolutions.com/blog/news-2/odoo-whatsapp-integration-a-boon-for-business-communication-25',
@@ -74,6 +74,6 @@
     },
     'installable': True,
     'auto_install': False,
-    'license': 'LGPL-3',
+    'license': 'OPL-1',
     'images': ['static/description/tus_banner.gif'],
 }

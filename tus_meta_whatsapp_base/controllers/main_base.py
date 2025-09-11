@@ -39,6 +39,9 @@ class WebHook(http.Controller):
                 'whatsapp_channel': True,
                 'channel_partner_ids': [(4, x) for x in partner_to],
             })
+            if not channel.company_id:
+                channel.company_id = self.env.user.provider_id.company_id.id
+                channel.provider_id = self.env.user.provider_id.id
             # channel.write({'channel_member_ids': [(5, 0, 0)] + [
             #     (0, 0, {'partner_id': line_vals}) for line_vals in partner_to]})
             # partner.write({'channel_id': channel.id})

@@ -104,8 +104,8 @@
         justify-content: end !important;
     }
     .o-mail-Message-body{
-        text-align: end ;
-
+        direction: ltr;
+        text-align: end;
       }
    .rounded-end-3 {
         border-top-left-radius: 0.375rem !important;
@@ -128,4 +128,9 @@
     .o-mail-Message-author {
         display: none;
     }
+}
+.load_more{
+    padding: 4px;
+    background-color: transparent;
+    margin: 3px;
 }

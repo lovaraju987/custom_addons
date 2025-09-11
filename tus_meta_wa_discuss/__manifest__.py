@@ -1,6 +1,6 @@
 {
     'name': 'Odoo Meta WhatsApp Discuss | Odoo Whatsapp Bidirectional Integration  | Odoo Meta WhatsApp Graph API | Odoo V17 Community Edition',
-    'version': '17.2',
+    'version': '17.5',
     'author': 'TechUltra Solutions Private Limited',
     'category': 'Discuss',
     'live_test_url': 'https://www.techultrasolutions.com/blog/news-2/odoo-whatsapp-integration-a-boon-for-business-communication-25',
@@ -39,6 +39,8 @@
     """,
     'depends': ['web', 'tus_meta_whatsapp_base'],
     'data': [
+        'data/demo.xml',
+        'data/cron.xml',
         'views/res_config_settings_views.xml',
     ],
     'assets': {
@@ -57,6 +59,6 @@
     },
     'installable': True,
     'auto_install': False,
-    'license': 'LGPL-3',
+    'license': 'OPL-1',
     'images': ['static/description/main_screen.gif'],
 }

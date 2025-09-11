@@ -45,12 +45,15 @@ class ServerActions(models.Model):
             ctx = {'default_model': rec._name,
                    'default_res_id': rec.id,
                    'default_template_id': self.wa_template_id.id,
+                   'is_automated_action': True,
                    'default_partner_id': rec.id}
+            report_taken = False
             if report:
                 ctx.update({'report': report})
+                report_taken = True
             if rec._name == 'res.partner':
-                composer = self.env['wa.compose.message'].with_context(ctx).create({})
-                composer.send_whatsapp_message()
+                composer = self.env['wa.compose.message'].with_user(self.wa_template_id.provider_id.user_id.id).with_context(ctx).create({})
+                composer.with_context({'is_automated_action': True,'report_taken':report_taken}).send_whatsapp_message()
             elif rec._name == 'pos.order':
                 report_id = self.env.ref('point_of_sale.pos_invoice_report').sudo()  # Action of the report
                 pdf = report_id._render_qweb_pdf(rec.id)
@@ -65,10 +68,10 @@ class ServerActions(models.Model):
                                               'res_model': 'wa.msgs',
                                               })
                 ctx.update({'default_attachment_ids': [(4, attac_id.id)]})
-                composer = self.env['wa.compose.message'].with_context(ctx).create({})
-                composer.send_whatsapp_message()
+                composer = self.env['wa.compose.message'].with_user(self.wa_template_id.provider_id.user_id.id).with_context(ctx).create({})
+                composer.with_context({'is_automated_action': True,'report_taken':report_taken}).send_whatsapp_message()
             else:
                 if rec.partner_id:
-                    composer = self.env['wa.compose.message'].with_context(ctx).create({})
-                    composer.send_whatsapp_message()
+                    composer = self.env['wa.compose.message'].with_user(self.wa_template_id.provider_id.user_id.id).with_context(ctx).create({})
+                    composer.with_context({'is_automated_action': True,'report_taken':report_taken}).send_whatsapp_message()
         return False

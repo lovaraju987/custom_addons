@@ -39,15 +39,6 @@
                             </div>
                             <div class="col-12 col-lg-6 o_setting_box">
                                 <div class="o_setting_left_pane">
-                                    <field name="module_tus_meta_wa_crm_in_discuss" class="oe_inline"/>
-                                </div>
-                                <div class="o_setting_right_pane">
-                                    <label for="module_tus_meta_wa_crm_in_discuss" string="CRM In Discuss"
-                                           class=" o_light_label"/>
-                                </div>
-                            </div>
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane">
                                     <field name="module_tus_meta_wa_sale" class="oe_inline"/>
                                 </div>
                                 <div class="o_setting_right_pane">
@@ -56,28 +47,10 @@
                             </div>
                             <div class="col-12 col-lg-6 o_setting_box">
                                 <div class="o_setting_left_pane">
-                                    <field name="module_tus_meta_wa_sale_in_discuss" class="oe_inline"/>
-                                </div>
-                                <div class="o_setting_right_pane">
-                                    <label for="module_tus_meta_wa_sale_in_discuss" string="Sales In Discuss"
-                                           class=" o_light_label"/>
-                                </div>
-                            </div>
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane">
                                     <field name="module_tus_meta_wa_purchase" class="oe_inline"/>
                                 </div>
                                 <div class="o_setting_right_pane">
                                     <label for="module_tus_meta_wa_purchase" string="Purchase"
-                                           class=" o_light_label"/>
-                                </div>
-                            </div>
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane">
-                                    <field name="module_tus_meta_wa_purchase_in_discuss" class="oe_inline"/>
-                                </div>
-                                <div class="o_setting_right_pane">
-                                    <label for="module_tus_meta_wa_purchase_in_discuss" string="Purchase In Discuss"
                                            class=" o_light_label"/>
                                 </div>
                             </div>
@@ -93,28 +66,10 @@
                             </div>
                             <div class="col-12 col-lg-6 o_setting_box">
                                 <div class="o_setting_left_pane">
-                                    <field name="module_tus_meta_wa_invoice_in_discuss" class="oe_inline"/>
-                                </div>
-                                <div class="o_setting_right_pane">
-                                    <label for="module_tus_meta_wa_invoice_in_discuss" string="Invoice In Discuss"
-                                           class=" o_light_label"/>
-                                </div>
-                            </div>
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane">
                                     <field name="module_tus_meta_wa_helpdesk" class="oe_inline"/>
                                 </div>
                                 <div class="o_setting_right_pane">
                                     <label for="module_tus_meta_wa_helpdesk" string="Helpdesk"
-                                           class=" o_light_label"/>
-                                </div>
-                            </div>
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane">
-                                    <field name="module_tus_meta_wa_helpdesk_in_discuss" class="oe_inline"/>
-                                </div>
-                                <div class="o_setting_right_pane">
-                                    <label for="module_tus_meta_wa_helpdesk_in_discuss" string="Helpdesk In Discuss"
                                            class=" o_light_label"/>
                                 </div>
                             </div>

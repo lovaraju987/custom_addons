@@ -16,7 +16,7 @@ class Components(models.Model):
                              ('footer', 'FOOTER'), ('buttons', 'BUTTONS'),
                              ('interactive', 'INTERACTIVE'),
                              ('carousel', 'CAROUSEL'),
-                             ('limited_time_offer', 'Limited Time Offer')],
+                             ('limited_time_offer', 'Limited Time Offer'), ('order_status', 'Order Status')],
                             'Type', default='header')
     formate = fields.Selection([('text', 'TEXT'),
                                 ('media', 'MEDIA')],
@@ -57,13 +57,19 @@ class Components(models.Model):
     is_expiration = fields.Boolean(string='Is Expiration', default=True)
     limited_offer_exp_date = fields.Datetime(string='Offer Expiry Date', readonly=False)
 
-    @api.onchange("text")
+    @api.onchange("text",'interactive_list_ids','interactive_button_ids')
     def onchange_text(self):
         for rec in self:
             if rec.type == 'header' and rec.formate == 'text' and rec.text and len(rec.text) > 60:
                 raise UserError(_("60-character limit for headers text."))
             if rec.type == 'body' and rec.formate == 'text' and rec.text and len(rec.text) > 1024:
                 raise UserError(_("1,024-character limit for body text."))
+            # if rec.type == 'buttons' and len(rec.wa_button_ids) > 3:
+            #     raise UserError(_("You Can Only Add 3 Buttons!!"))
+            if rec.type == 'interactive' and rec.interactive_type == 'button' and len(rec.interactive_button_ids) > 3:
+                raise UserError(_("You Can Only Add 3 Buttons!!"))
+            if rec.type == 'interactive' and rec.interactive_type == 'list' and len(rec.interactive_list_ids) > 10:
+                raise UserError(_("You Can Only Add 10 Lists!!"))
 
     @api.constrains('type', 'formate', 'text')
     def _constrain_text_length(self):
