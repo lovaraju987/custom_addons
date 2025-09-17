@@ -165,6 +165,11 @@ class ProjectTask(models.Model):
         domain="[('id', '!=', user_ids)]",
     )
 
+    x_start_date = fields.Date(
+        string="Start Date",
+        help="The start date for the task."
+    )
+
     @api.onchange('project_id')
     def _onchange_supporting_technicians(self):
         """ Clear supporting technicians if the project is not Field Service. """

@@ -67,7 +67,7 @@
            <xpath expr="//field[@name='project_id']" position="after">
                <field name="is_field_service_project" invisible="1"/>
            </xpath>
-           <xpath expr="//field[@name='x_start_date']" position="after">
+           <xpath expr="//field[@name='user_ids']" position="after">
                <!-- <field name="slot_sdate" widget="date" invisible="[('stage_id.name', '=', 'Cancelled'), ('project', '!=', 'Field Service')]"/> -->
                <field name="slot_sdate" widget="date" decoration-danger="slot_sdate &lt; current_date and state not in ['1_done', '1_canceled']" invisible="not is_field_service_project"/>
                <field name="slot_ids" widget="many2many_tags" placeholder="Select slots" invisible="not is_field_service_project"/>
@@ -130,14 +130,14 @@
 
 
     <record id="view_task_form_inherit_v2" model="ir.ui.view">
-       <field name="name">project.task.form.inherit</field>
+       <field name="name">project.task.form.inherit.v2</field>
        <field name="model">project.task</field>
        <field name="inherit_id" ref="project.view_task_form2"/>
        <field name="arch" type="xml">
        <!-- Add the field to the view but keep it invisible -->
-           <xpath expr="//field[@name='project_id']" position="after">
+           <!-- <xpath expr="//field[@name='project_id']" position="after">
                <field name="is_field_service_project" invisible="1"/>
-           </xpath>
+           </xpath> -->
            <!-- Add the phone number field next to the assignee field -->
            <xpath expr="//field[@name='user_ids']" position="after">
                <field name="assignee_phone" readonly="1" invisible="1"/>
